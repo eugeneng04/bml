@@ -15,7 +15,7 @@ class ArucoDetector:
             # if isinstance(self.camera_id, (int,)):
             #     self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW)
             # else:
-            self.cap = cv2.VideoCapture(self.camera_id)
+            self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW)
 
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)

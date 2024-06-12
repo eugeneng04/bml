@@ -1,0 +1,21 @@
+function output = outputdata(naneye)
+
+    naneye.StartCapture();
+    lh1 = addlistener(naneye, 'ImageProcessed', @(o,e)ouputObj(e));
+    output = getData();
+    disp("displaying output");
+    disp(output);
+    delete(lh1);
+    return;
+end
+
+function ouputObj(inbytes)
+    global hbytes
+    hbytes = uint8(inbytes.GetImageData.GetProcessedDataARGBByte);
+end
+
+function output = getData()
+   global hbytes
+   output = hbytes;
+   return;
+end

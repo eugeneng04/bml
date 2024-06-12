@@ -2,6 +2,7 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 from utils_data_process import cmp_corners
+
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
     # dictionary = aruco.extendDictionary(30, 3)
@@ -13,12 +14,12 @@ def detect_aruco_tag(frame):
     return detector.detectMarkers(frame)
 
 # Define the ID of the USB camera
-camera_id = 1
+camera_id = 0
 import utils_aruco
 utils_aruco.ArucoDetector(camera_id)
 # Create a VideoCapture object to capture images from the camera
-#cap = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)  
-cap = cv2.VideoCapture(camera_id)                       
+cap = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)  
+#cap = cv2.VideoCapture(camera_id)                       
                        # Check if the camera is opened successfully
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
