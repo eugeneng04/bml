@@ -33,34 +33,41 @@ def readnbyte(sock, n):
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     sock.connect(('127.0.0.1', 8888))
     print("Connection to server established!")
-    while True:
-        data = readnbyte(sock, 250000)
-        #print('Received', repr(data)))
+    #while True:
+    data = readnbyte(sock, 250000)
+    #print('Received', repr(data)))
 
-        # Convert bytes to numpy array of integers
-        array = np.frombuffer(data, dtype=np.uint8)
-        print(array)
-        print(len(array))
-        print(array.shape)
-        # Reshape the
-        #  1D array into a 250x250 array
-        #array = array.reshape((256, 256))
-        # Reshape the byte array to separate the channels
-        b = np.reshape(array[0::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2)).T
-        g = np.reshape(array[1::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2)).T
-        r = np.reshape(array[2::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2)).T
+    # Convert bytes to numpy array of integers
+    array = np.frombuffer(data, dtype=np.uint8)
+    filename = './output_python.txt'
+    np.savetxt(filename, array , fmt='%d', delimiter='\t')
 
-        # Combine the channels into an RGB image  
-        imgh = np.dstack((r, g, b))
-        print(len(imgh))
+# Write the data to the text file
+    # print(array)
+    # print(len(array))
+    # print(array.shape)
+    # Reshape the
+    #  1D array into a 250x250 array
+    #array = array.reshape((256, 256))
+    # Reshape the byte array to separate the channels
+    b = np.reshape(array[0::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
+    g = np.reshape(array[1::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
+    r = np.reshape(array[2::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
 
-        # Now you have the 250x250 array where the values range from 0 to 255
+    # Specify the file name
 
-        #print(imgh)
+    # np.savetxt("out_python_b.txt", b , fmt='%d', delimiter='\t')
+    # np.savetxt("out_python_g.txt", g , fmt='%d', delimiter='\t')
+    # np.savetxt("out_python_r.txt", r , fmt='%d', delimiter='\t')
+    # Export the flattened image to a text file
+    imgh = cv2.merge((r, g, b))
+    # Now you have the 250x250 array where the values range from 0 to 255
 
-        cv2.imshow('Image', imgh)
-        time.sleep(0.1)
-        cv2.destroyAllWindows()
+    #print(imgh)
+
+    cv2.imshow('Image', imgh)
+    cv2.waitKey(0)
+        
         
 
 
