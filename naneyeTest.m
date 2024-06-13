@@ -11,11 +11,14 @@ function naneyeTest()
     w = 250;
     h = 250;
     %}
+    naneye.StartCapture();
+    global lh1
+    global imgh
+    lh1 = addlistener(naneye, 'ImageProcessed', @(o,e)ouputObj(e));
     while true
-        try
-            output = outputdata(naneye);
-            disp(output);
-            write(server, output);
+        output = imgh;
+        %disp(output);
+        write(server, output);
             %{
             % Write the data to the text file
             b = reshape(output(1:4:end), [w,h])';
@@ -28,10 +31,29 @@ function naneyeTest()
             writematrix(b, "out_matlab_b.txt", 'delimiter', '\t');
             %disp(size(output));
             %}
-        catch ME
-            clear server;
-            rethrow(ME);
-        end
     end
-    flush(server);
 end
+
+%{
+function output = outputdata(naneye)
+    %global lh1
+    %lh1 = addlistener(naneye, 'ImageProcessed', @(o,e)ouputObj(e));
+    output = imgh;
+    return;
+end
+%}
+
+function ouputObj(inbytes)
+    global imgh
+    imgh = uint8(inbytes.GetImageData.GetProcessedDataARGBByte);
+end
+
+%{
+function output = getData()
+   %global lh1
+   global imgh
+   output = imgh;
+   %delete(lh1);
+   return;
+end
+%}

@@ -3,14 +3,11 @@ import cv2.aruco as aruco
 import numpy as np
 from utils_data_process import cmp_corners
 import socket
+import time
 
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
-    # dictionary = aruco.extendDictionary(30, 3)
-
-    # dictionary = aruco.getPredefinedDictionary(aruco.DICT_ARUCO_ORIGINAL)
     parameters =  aruco.DetectorParameters()
-    # parameters.polygonalApproxAccuracyRate=0.05
     detector = aruco.ArucoDetector(dictionary, parameters)
     return detector.detectMarkers(frame)
 
@@ -28,16 +25,23 @@ def readnbyte(sock, n):
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     sock.connect(('127.0.0.1', 8888))
     print("Connection to server established!")
-
+    frame_count = 0
+    start_time = time.time()
+    fps = 0
     while(True):
         # Capture an image from the camera
         data = readnbyte(sock, 250000)
-
-        if not data:
-            print("Failed to capture the image.")
-            exit()
-    
-        array = np.frombuffer(data, dtype=np.uint8)
+        #data = sock.recv(250000)
+        frame_count += 1
+        elapsed_time = time.time() - start_time
+        if elapsed_time >= 1.0:
+            fps = frame_count / elapsed_time
+            
+            frame_count = 0
+            start_time = time.time()
+        print(f"FPS: {fps}")
+        #array = np.frombuffer(data, dtype=np.uint8)
+        array = data
         
         b = np.reshape(array[0::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
         g = np.reshape(array[1::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
