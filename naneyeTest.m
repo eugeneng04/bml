@@ -10,13 +10,14 @@ function naneyeTest()
     while true
         try
             output = outputdata(naneye);
-            disp(output);
+            %disp(output);
             write(server, output);
+            disp(size(output));
         catch ME
             clear server;
             rethrow(ME);
         end
-        pause(1);
+        pause(0.1);
     end
     flush(server);
 end
