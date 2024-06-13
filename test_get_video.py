@@ -42,7 +42,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     filename = './output_python.txt'
     np.savetxt(filename, array , fmt='%d', delimiter='\t')
 
-# Write the data to the text file
+    # Write the data to the text file
     # print(array)
     # print(len(array))
     # print(array.shape)
@@ -61,6 +61,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     # np.savetxt("out_python_r.txt", r , fmt='%d', delimiter='\t')
     # Export the flattened image to a text file
     imgh = cv2.merge((r, g, b))
+    imgh_dstack = np.dstack([r,g,b])
+    print(imgh == imgh_dstack)
     # Now you have the 250x250 array where the values range from 0 to 255
 
     #print(imgh)

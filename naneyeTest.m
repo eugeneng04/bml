@@ -32,7 +32,6 @@ function naneyeTest()
             clear server;
             rethrow(ME);
         end
-        pause(0.1);
     end
     flush(server);
 end
