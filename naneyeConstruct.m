@@ -32,7 +32,12 @@ function naneye = naneyeConstruct()
     colorlist.colorReconstruction.Apply = 1;
 
     BW = 0;
+
+    isAECon = naneye1.AutomaticExpControl().IsEnabled;
+    isROIon = naneye1.AutomaticExpControl().ShowROI;
+    isCOLORon = colorlist.colorReconstruction.Apply;
+
+    %naneye1.StartCapture();
     naneye = naneye1;
-    naneye.StartCapture();
     return;
 end
