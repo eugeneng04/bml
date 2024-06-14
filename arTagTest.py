@@ -5,22 +5,17 @@ from utils_data_process import cmp_corners
 import socket
 import time
 import subprocess
-import matlab.engine
-import threading
-
-# eng = matlab.engine.start_matlab()
-# matlab_thread = threading.Thread(target = (lambda: eng.naneyeTest(nargout = 0)))
-# matlab_thread.start()
 
 matlab_executable = 'matlab.exe'
 
-matlab_script = 'naneyetest2'
+matlab_script = 'streamNaneyeImage(false)'
 
-command = [matlab_executable, '-nosplash', '-nodesktop', '-r', f'{matlab_script}']
+command = [matlab_executable, '-nosplash', '-nodesktop', '-r', f'cd MATLAB; {matlab_script};, exit;']
 
 process = subprocess.Popen(command)
 
 time.sleep(15)
+
 
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
@@ -67,6 +62,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
 
             imgh = np.dstack((r, g, b))
             frame = imgh
+
             # print(frame.dtype, frame.shape)
             # Check if the image is captured successfully
                 
@@ -81,8 +77,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                     corners_by_id[tmp_id] = corners[j]
                 if 1 in corners_by_id and 3 in corners_by_id:
                     print(cmp_corners(corners_by_id[1], corners_by_id[3])['rot'])
-            
-            cv2.imshow("Image", frame)
+            cv2.imshow('image', imgh)
             
             # Wait for a key press
             key = cv2.waitKey(1)
@@ -90,13 +85,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             # Exit the loop if the "q" key is pressed
             if key == ord("q"):
                 sock.close()
-                process.kill()
-                outs, errs = process.communicate()
                 break
         except Exception as e:
             print(e)
-            process.kill()
-            outs, errs = process.communicate()
             break
 
 

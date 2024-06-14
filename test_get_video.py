@@ -67,7 +67,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
 
     #print(imgh)
 
-    cv2.imshow('Image', imgh)
+    cv2.namedWindow('Image', imgh)
+    cv2.resizeWindow('image', 500,500)
     cv2.waitKey(0)
         
         
