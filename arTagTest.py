@@ -4,6 +4,23 @@ import numpy as np
 from utils_data_process import cmp_corners
 import socket
 import time
+import subprocess
+import matlab.engine
+import threading
+
+# eng = matlab.engine.start_matlab()
+# matlab_thread = threading.Thread(target = (lambda: eng.naneyeTest(nargout = 0)))
+# matlab_thread.start()
+
+matlab_executable = 'matlab.exe'
+
+matlab_script = 'naneyetest2'
+
+command = [matlab_executable, '-nosplash', '-nodesktop', '-r', f'{matlab_script}']
+
+process = subprocess.Popen(command)
+
+time.sleep(15)
 
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
@@ -29,50 +46,59 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     start_time = time.time()
     fps = 0
     while(True):
-        # Capture an image from the camera
-        data = readnbyte(sock, 250000)
-        #data = sock.recv(250000)
-        frame_count += 1
-        elapsed_time = time.time() - start_time
-        if elapsed_time >= 1.0:
-            fps = frame_count / elapsed_time
+        try:
+            # Capture an image from the camera
+            data = readnbyte(sock, 250000)
+            #data = sock.recv(250000)
+            frame_count += 1
+            elapsed_time = time.time() - start_time
+            if elapsed_time >= 1.0:
+                fps = frame_count / elapsed_time
+                
+                frame_count = 0
+                start_time = time.time()
+            print(f"FPS: {fps}")
+            #array = np.frombuffer(data, dtype=np.uint8)
+            array = data
             
-            frame_count = 0
-            start_time = time.time()
-        print(f"FPS: {fps}")
-        #array = np.frombuffer(data, dtype=np.uint8)
-        array = data
-        
-        b = np.reshape(array[0::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
-        g = np.reshape(array[1::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
-        r = np.reshape(array[2::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
+            b = np.reshape(array[0::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
+            g = np.reshape(array[1::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
+            r = np.reshape(array[2::4], (int(len(array) ** 0.5) // 2, int(len(array) ** 0.5) // 2))
 
-        imgh = np.dstack((r, g, b))
-        frame = imgh
-        # print(frame.dtype, frame.shape)
-        # Check if the image is captured successfully
+            imgh = np.dstack((r, g, b))
+            frame = imgh
+            # print(frame.dtype, frame.shape)
+            # Check if the image is captured successfully
+                
+            corners, ids, c = detect_aruco_tag(frame)
+            aruco.drawDetectedMarkers(frame, corners, ids)
+
+            if len(corners) > 0:
+                corners = np.array(corners)[:, 0, :]
+                ids = np.array(ids)[:, 0]
+                corners_by_id = {}
+                for j, tmp_id in enumerate(ids):
+                    corners_by_id[tmp_id] = corners[j]
+                if 1 in corners_by_id and 3 in corners_by_id:
+                    print(cmp_corners(corners_by_id[1], corners_by_id[3])['rot'])
             
-        corners, ids, c = detect_aruco_tag(frame)
-        aruco.drawDetectedMarkers(frame, corners, ids)
+            cv2.imshow("Image", frame)
+            
+            # Wait for a key press
+            key = cv2.waitKey(1)
 
-        if len(corners) > 0:
-            corners = np.array(corners)[:, 0, :]
-            ids = np.array(ids)[:, 0]
-            corners_by_id = {}
-            for j, tmp_id in enumerate(ids):
-                corners_by_id[tmp_id] = corners[j]
-            if 1 in corners_by_id and 3 in corners_by_id:
-                print(cmp_corners(corners_by_id[1], corners_by_id[3])['rot'])
-        
-        cv2.imshow("Image", frame)
-        
-        # Wait for a key press
-        key = cv2.waitKey(1)
-
-        # Exit the loop if the "q" key is pressed
-        if key == ord("q"):
-            sock.close()
+            # Exit the loop if the "q" key is pressed
+            if key == ord("q"):
+                sock.close()
+                process.kill()
+                outs, errs = process.communicate()
+                break
+        except Exception as e:
+            print(e)
+            process.kill()
+            outs, errs = process.communicate()
             break
+
 
 # Release the VideoCapture object and close all windows
 cv2.destroyAllWindows()
