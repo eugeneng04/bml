@@ -75,7 +75,7 @@ if __name__ == "__main__":
                 first_frame = False
                 ax.set_xlim(0, w * scale)
                 ax.set_ylim(0, h * scale)
-                ax.set_xlabel('X-axis (mm)')q
+                ax.set_xlabel('X-axis (mm)')
                 ax.set_ylabel('Y-axis (mm)')
                 ax.set_title('Center of ARTag')
                 ax.grid(True)
