@@ -13,12 +13,32 @@ import time
 import argparse
 import datetime
 
+def detect_aruco_tag(frame):
+    dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
+    parameters =  aruco.DetectorParameters()
+    detector = aruco.ArucoDetector(dictionary, parameters)
+    return detector.detectMarkers(frame)
+
+def displayArucoTag(frame):  
+    corners, ids, c = detect_aruco_tag(frame)
+    aruco.drawDetectedMarkers(frame, corners, ids)
+
+    if len(corners) > 0:
+        corners = np.array(corners)[:, 0, :]
+        ids = np.array(ids)[:, 0]
+        corners_by_id = {}
+        for j, tmp_id in enumerate(ids):
+            corners_by_id[tmp_id] = corners[j]
+        if 1 in corners_by_id and 3 in corners_by_id:
+            print(cmp_corners(corners_by_id[1], corners_by_id[3])['rot'])
+
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     
     parser.add_argument("comment", help = "comment to add to filename")
+    parser.add_argument("live", help = "True/False values for live ARTag streaming")
 
     frame_size = (250, 250) #hardcoded for naneye
     output = cv2.VideoWriter(f'./logs/{datetime.now().strftime("%Y-%m-%d_%H%M%S")}_{parser.parse_args().comment}', cv2.VideoWriter_fourcc('M','J','P','G'), 60, frame_size)
@@ -43,6 +63,10 @@ if __name__ == "__main__":
             #add bounding box to ARTag
             #displayArucoTag(frame)
             output.write(frame)
+
+            if parser.parse_args().live:
+                displayArucoTag(frame)
+
             frame = utils_naneye.upscaleImage(frame, 2)
             cv2.imshow("image", frame)
 
