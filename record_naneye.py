@@ -11,7 +11,7 @@ import socketComm
 import utils_naneye
 import time
 import argparse
-import datetime
+from datetime import datetime
 
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
