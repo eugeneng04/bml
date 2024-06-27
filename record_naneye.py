@@ -39,9 +39,11 @@ if __name__ == "__main__":
     frame_size = (250, 250) #hardcoded for naneye
 
     logs_dir = utils_output.createLogFolder()
+
+    folder_name = f"{logs_dir}_{parser.parse_args().comment}"
     try:
         output = cv2.VideoWriter(
-            f'{logs_dir}/{parser.parse_args().comment}.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 60, frame_size)
+            f'{folder_name}/video.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 60, frame_size)
     except Exception as e:
         print(f"Error creating VideoWriter: {e}")
 
@@ -97,7 +99,7 @@ if __name__ == "__main__":
     else:
         data = {"frames": frames}
     try:
-        with open('{logs_dir}/data.pickle', 'wb') as handle:
+        with open(f'{folder_name}/data.pickle', 'wb') as handle:
             pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
     except Exception as e:
         print(f"error with saving data: {e}")
