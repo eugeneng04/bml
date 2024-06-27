@@ -8,6 +8,9 @@ import cv2.aruco as aruco
 import numpy as np
 import matplotlib.pyplot as plt
 
+import utils_output
+import argparse
+
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
     # dictionary = aruco.extendDictionary(30, 3)
@@ -45,55 +48,69 @@ def pixelToMM(corners, mm):
     return mm/avg_len
 
 if __name__ == "__main__":
-    camera_id = 0
-    cap = cv2.VideoCapture(camera_id)
-    #cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    #cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-    dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
-    parameters =  aruco.DetectorParameters()
-    detector = aruco.ArucoDetector(dictionary, parameters)
-    aruco_detector = detector.detectMarkers #function that takes in a frame
+    parser = argparse.ArgumentParser()
 
-    first_frame = True
-    scale = 0
-    x_coords = []
-    y_coords = []
-    rotation = []
-    fig, ax = plt.subplots()
+    parser.add_argument("name", help = "folder for name of file")
+    parser.add_argument("dump", help = "whether to use saved output")
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+    if parser.parse_args.arg_input:
+        cap = cv2.VideoCapture(parser.parse_args.name)
 
-        corners, ids, c = detect_aruco_tag(frame)
-        if ids is not None:
-            if first_frame:
-                h, w, *_ = frame.shape
-                scale = pixelToMM(corners[0], 3)
-                first_frame = False
-                ax.set_xlim(0, w * scale)
-                ax.set_ylim(0, h * scale)
-                ax.set_xlabel('X-axis (mm)')
-                ax.set_ylabel('Y-axis (mm)')
-                ax.set_title('Center of ARTag')
-                ax.grid(True)
-                plot = ax.scatter([], [], s = 10)
-            center, rot = get_rotation_from_corners(corners[0])
-            aruco.drawDetectedMarkers(frame, corners, ids)
-            frame = cv2.circle(frame, (int(center[0]), int(center[1])), radius=5, color=(0, 0, 255), thickness=1)
-            x_coords.append(center[0] * scale)
-            y_coords.append(center[1] * scale)
-            rotation.append(rot)
-            plot.set_offsets(np.c_[x_coords, y_coords])
-            plt.draw()
-            plt.pause(0.001)
+    if (not parser.parse_args.dump):
+        dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
+        parameters =  aruco.DetectorParameters()
+        detector = aruco.ArucoDetector(dictionary, parameters)
+        aruco_detector = detector.detectMarkers #function that takes in a frame
 
-        cv2.imshow("image", frame)
-        key = cv2.waitKey(1)
-        if key == ord("q"):
-            break
+        first_frame = True
+        scale = 0
+        x_coords = []
+        y_coords = []
+        rotation = []
+        fig, ax = plt.subplots()
 
-cap.release()
-cv2.destroyAllWindows()
+        brightness = 1
+        contrast = 1
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            frame = cv2.resize(frame, (640, 640))
+            #frame = cv2.GaussianBlur(frame, (1,1), 0)
+            frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness) 
+            kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]]) 
+            
+            # Sharpen the image 
+            frame = cv2.filter2D(frame, -1, kernel) 
+            corners, ids, c = detect_aruco_tag(frame)
+            if ids is not None:
+                if first_frame:
+                    h, w, *_ = frame.shape
+                    scale = pixelToMM(corners[0], 3)
+                    first_frame = False
+                    ax.set_xlim(0, w * scale)
+                    ax.set_ylim(0, h * scale)
+                    ax.set_xlabel('X-axis (mm)')
+                    ax.set_ylabel('Y-axis (mm)')
+                    ax.set_title('Center of ARTag')
+                    ax.grid(True)
+                    plot = ax.scatter([], [], s = 10)
+                center, rot = get_rotation_from_corners(corners[0])
+                aruco.drawDetectedMarkers(frame, corners, ids)
+                frame = cv2.circle(frame, (int(center[0]), int(center[1])), radius=5, color=(0, 0, 255), thickness=1)
+                x_coords.append(center[0] * scale)
+                y_coords.append(center[1] * scale)
+                rotation.append(rot)
+                plot.set_offsets(np.c_[x_coords, y_coords])
+                plt.draw()
+                plt.pause(0.001)
+
+            cv2.imshow("image", frame)
+            key = cv2.waitKey(1)
+            if key == ord("q"):
+                break
+
+    cap.release()
+    cv2.destroyAllWindows()
