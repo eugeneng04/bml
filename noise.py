@@ -54,7 +54,6 @@ if __name__ == "__main__":
     parser.add_argument("name", help = "folder for name of file")
     parser.add_argument("--dump", action="store_false", help = "whether to use saved output")
     folder_name = f"{utils_file.getCurrPath()}/logs/{parser.parse_args().name}"
-    cap = cv2.VideoCapture(f"{folder_name}/video.avi")
 
     flag = utils_file.validData(folder_name, "x_coords")
 
@@ -62,6 +61,7 @@ if __name__ == "__main__":
 
     if (parser.parse_args().dump or not flag):
         print("Parsing Video in Real Time")
+        cap = cv2.VideoCapture(f"{folder_name}/video.avi")
         frames = []
         cornerLst = []
         idsLst = []
