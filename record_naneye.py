@@ -8,7 +8,7 @@ import utils_naneye
 import argparse
 import time
 import pickle
-import utils_output
+import utils_file
 
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     frame_size = (250, 250) #hardcoded for naneye
 
-    logs_dir = utils_output.createLogFolder()
+    logs_dir = utils_file.createLogFolder()
 
     folder_name = f"{logs_dir}_{parser.parse_args().comment}"
     try:

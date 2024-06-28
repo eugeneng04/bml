@@ -8,10 +8,8 @@ import cv2.aruco as aruco
 import numpy as np
 import matplotlib.pyplot as plt
 
-import utils_output
+import utils_file
 import argparse
-
-import pickle
 
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
@@ -55,17 +53,15 @@ if __name__ == "__main__":
 
     parser.add_argument("name", help = "folder for name of file")
     parser.add_argument("--dump", action="store_false", help = "whether to use saved output")
-    folder_name = f"{utils_output.getCurrPath()}/logs/{parser.parse_args().name}"
+    folder_name = f"{utils_file.getCurrPath()}/logs/{parser.parse_args().name}"
     cap = cv2.VideoCapture(f"{folder_name}/video.avi")
 
-    flag = True
-    if utils_output.fileExists(f"{folder_name}/data.pickle"):
-        with open(f'{folder_name}/data.pickle', 'rb') as data:
-            saved_data = pickle.load(data)
-            if saved_data.get("x_coords") is not None:
-                flag = False
+    flag = utils_file.validData(folder_name, "x_coords")
 
-    if (not parser.parse_args().dump or not utils_output.fileExists(f"{folder_name}/data.pickle") or flag):
+    quit_early = False
+
+    if (parser.parse_args().dump or not flag):
+        print("Parsing Video in Real Time")
         frames = []
         cornerLst = []
         idsLst = []
@@ -90,14 +86,14 @@ if __name__ == "__main__":
             if not ret:
                 break
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-            frame = cv2.resize(frame, (640, 640))
-            #frame = cv2.GaussianBlur(frame, (1,1), 0)
-            frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness) 
-            kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]]) 
+            # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            # frame = cv2.resize(frame, (640, 640))
+            # #frame = cv2.GaussianBlur(frame, (1,1), 0)
+            # frame = cv2.addWeighted(frame, contrast, np.zeros(frame.shape, frame.dtype), 0, brightness) 
+            # kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]]) 
             
-            # Sharpen the image 
-            frame = cv2.filter2D(frame, -1, kernel) 
+            # # Sharpen the image 
+            # frame = cv2.filter2D(frame, -1, kernel) 
             corners, ids, c = detect_aruco_tag(frame)
             cornerLst.append(corners)
             idsLst.append(ids)
@@ -126,11 +122,14 @@ if __name__ == "__main__":
             cv2.imshow("image", frame)
             key = cv2.waitKey(1)
             if key == ord("q"):
+                quit_early = True
+                print("quit early, not saving data")
                 break
-        
-        if utils_output.isPath(f"{folder_name}/data.pickle"):
-            with open(f'{folder_name}/data.pickle', 'rb') as data:
-                saved_data = pickle.load(data)
+
+        if not quit_early:
+            if utils_file.isPath(f"{folder_name}/data.pickle"):
+                saved_data = utils_file.openFile(folder_name)
+
                 saved_data["noise_params"] = [w * scale, h * scale]
                 saved_data["frames"] = frames
                 saved_data["corners"] = cornerLst
@@ -138,39 +137,37 @@ if __name__ == "__main__":
                 saved_data["x_coords"] = x_coords
                 saved_data["y_coords"] = y_coords
                 saved_data["rotation"] = rotation
-    
-                with open(f'{folder_name}/data.pickle', 'wb') as handle:
-                    pickle.dump(saved_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
-        else:
-            data = {"frames": frames, "corners": cornerLst, "ids": idsLst, "x_coords": x_coords, "y_coords": y_coords, "rotation": rotation, "noise_params": [w * scale, h * scale]}
-            with open(f'{folder_name}/data.pickle', 'wb') as handle:
-                    pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                utils_file.saveFile(folder_name, saved_data)
+            
+            else:
+                data = {"frames": frames, "corners": cornerLst, "ids": idsLst, "x_coords": x_coords, "y_coords": y_coords, "rotation": rotation, "noise_params": [w * scale, h * scale]}
+                utils_file.saveFile(folder_name, data)
         
         cap.release()
         cv2.destroyAllWindows()
     else:
+        print("Using Saved Data")
         fig, ax = plt.subplots()
-        with open(f'{folder_name}/data.pickle', 'rb') as data:
-            saved_data = pickle.load(data)
-            frames = saved_data["frames"]
-            cornerLst = saved_data["corners"]
-            idsLst = saved_data["ids"]
-            x_coords = saved_data["x_coords"]
-            y_coords = saved_data["y_coords"]
-            rotation = saved_data["rotation"]
-            noise_params = saved_data["noise_params"]
+        saved_data = utils_file.openFile(folder_name)
+        frames = saved_data["frames"]
+        cornerLst = saved_data["corners"]
+        idsLst = saved_data["ids"]
+        x_coords = saved_data["x_coords"]
+        y_coords = saved_data["y_coords"]
+        rotation = saved_data["rotation"]
+        noise_params = saved_data["noise_params"]
 
-            x_lim = noise_params[0]
-            y_lim = noise_params[1]
+        x_lim = noise_params[0]
+        y_lim = noise_params[1]
 
-            ax.set_xlim(0, x_lim)
-            ax.set_ylim(0, y_lim)
-            ax.set_xlabel('X-axis (mm)')
-            ax.set_ylabel('Y-axis (mm)')
-            ax.set_title('Center of ARTag')
-            ax.grid(True)
-            plot = ax.scatter(x_coords, y_coords, s = 10)
-            plt.draw()
-            plt.waitforbuttonpress(0)
-            plt.close()
+        ax.set_xlim(0, x_lim)
+        ax.set_ylim(0, y_lim)
+        ax.set_xlabel('X-axis (mm)')
+        ax.set_ylabel('Y-axis (mm)')
+        ax.set_title('Center of ARTag')
+        ax.grid(True)
+        plot = ax.scatter(x_coords, y_coords, s = 10)
+        plt.draw()
+        plt.waitforbuttonpress(0)
+        plt.close()
