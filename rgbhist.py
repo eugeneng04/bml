@@ -11,11 +11,15 @@ def genHistogram(frame):
     for i, col in enumerate(color):
         hist_ = cv2.calcHist([frame], [i], None, [256], [2,256])
         out.append(hist_)
+    return out
 
-def displayHist(hist):
+def displayHist(hist, frame):
     color = ("blue", "green", "red")
-    for i, col in enumerate(color):
-                plt.plot(hist[i], color = col)
+    plt.plot(hist[0], color = "blue")
+    plt.plot(hist[1], color = "green")
+    plt.plot(hist[2], color = "red")
+    #plt.draw()
+    plt.pause(0.0001)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -35,6 +39,7 @@ if __name__ == "__main__":
         plt.title("RGB Values")
 
         while True:
+            print(len(frames))
             ret, frame = cap.read()
             frames.append(frame)
             if not ret:
@@ -42,8 +47,15 @@ if __name__ == "__main__":
             
             hist = genHistogram(frame)
             hists.append(hist)
-            displayHist(hist)
-
+            displayHist(hist, frame)
+            cv2.imshow("image", frame)
+            key = cv2.waitKey(1)
+            if key == ord("q"):
+                quit_early = True
+                print("quit early, not saving data")
+                break
+        
+        print("saving data ...")
         if utils_file.isPath(f"{folder_name}/data.pickle"):
                 saved_data = utils_file.openFile(folder_name)
 
@@ -61,7 +73,12 @@ if __name__ == "__main__":
         fig, ax = plt.subplots()
         saved_data = utils_file.openFile(folder_name)
         hists = saved_data["hists"]
-        for hist in hists:
-             displayHist(hist)
+        frames = saved_data["frames"]
+        for hist, frame in zip(hists, frames):
+            displayHist(hist, "frames")
+            cv2.imshow("image", frame)
+            key = cv2.waitKey(1)
+            if key == ord("q"):
+                break
 
 
