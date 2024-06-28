@@ -1,3 +1,5 @@
 exp_4_1.py
 logs/*
 env
+__pycache__
+.DS_Store
