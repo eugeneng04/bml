@@ -1,5 +1,5 @@
-exp_4_1.py
-logs/*
+naneye/exp_4_1.py
+naneye/logs/*
 env
 __pycache__
 .DS_Store
