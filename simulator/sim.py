@@ -10,11 +10,6 @@ fig, ax = plt.subplots()
 
 
 def plotPath(path):
-    max_y = np.max(path[1])
-    max_x = np.max(path[0])
-    plt.xlim(-2, (max_x + 2))
-    plt.ylim(-(max_y + 2), max_y + 2)
-    ax.set_aspect('equal', adjustable='box')
     plt.plot(path[0], path[1], color = "black", label = "desired path")
     plt.legend
  
@@ -89,28 +84,35 @@ def calculate_distances(coordinates):
 
 if __name__ == "__main__":
     path = np.array([[0, 8, 12, 16, 20], [0, 0, 1.5, -1.5, 1.5]])
-
+    # plt.scatter(path[0], path[1], color = "red", label = "user input")
     x_interp = np.linspace(np.min(path[0]), np.max(path[0]), 100)
 
     y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic")
     new_path = [x_interp, y_quadratic(x_interp)]
+    # plotPath(new_path)
+    # plt.legend()
+    # plt.show()
     #print(new_path)
+
+    
     robot_coords = np.array([[0, 3, 6, 9, 12],[0, 0, 0, 0, 0]])
     init_conds = [0, 0, 0, 0 ,0]
     prev_optimal = init_conds
     for i in range(200):
         plotPath(new_path)
         #test_path = np.array([new_path[0][i:i+5], new_path[1][i:i+5]])
-        adjusted_x = robot_coords[0]+0.05
+        adjusted_x = robot_coords[0]+0.1
         next_coords = np.array([adjusted_x, y_quadratic(adjusted_x)])
         plt.scatter(next_coords[0], next_coords[1], color = "red")
-        optimal_params = solve_optimal(4, [0, 0, 0, 0, 0], next_coords)
+        optimal_params = solve_optimal(4, prev_optimal, next_coords)
         prev_optimal = optimal_params
         rot = optimal_params[:-1]
         offset = optimal_params[-1]
         robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), gen_len_array(3, 4))), offset)
         plot_robot(robot_coords)
         print(calculate_distances(robot_coords))
+        plt.xlim(0,25)
+        plt.ylim(-12.5, 12.5)
         plt.draw()
-        plt.pause(0.01)
+        plt.pause(0.001)
         plt.clf()
