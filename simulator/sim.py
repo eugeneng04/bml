@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
 from scipy.optimize import minimize
+import scipy.interpolate
 
 fig, ax = plt.subplots() 
 
@@ -9,16 +10,22 @@ fig, ax = plt.subplots()
 
 
 def plotPath(path):
-    plt.scatter(path[0], path[1], color = "blue", label = "desired path")
+    max_y = np.max(path[1])
+    max_x = np.max(path[0])
+    plt.xlim(-2, (max_x + 2))
+    plt.ylim(-(max_y + 2), max_y + 2)
+    ax.set_aspect('equal', adjustable='box')
+    plt.plot(path[0], path[1], color = "black", label = "desired path")
     plt.legend
  
 def rotate_robot(rot, len): #array of rotation
+    #print(len)
     H = np.eye(3)
     transformations = [H]
     for i in range(rot.size):
         Hrot = np.array([[np.cos(rot[i]), -np.sin(rot[i]), 0],
-                   [np.sin(rot[i]), np.cos(rot[i]), 0],
-                   [0, 0, 1]])
+                        [np.sin(rot[i]), np.cos(rot[i]), 0],
+                        [0, 0, 1]])
         Htrans = np.array([[1, 0, len[i]],
                           [0, 1, 0],
                           [0, 0, 1]])
@@ -40,11 +47,11 @@ def get_pos(H):
     return np.array(x_coords), np.array(y_coords)
 
 def plot_robot(coords):
-    plot = ax.plot(coords[0], coords[1], '--bo', label='robot', linewidth=1, alpha=0.5)
+    plot = plt.plot(coords[0], coords[1], '--bo', label='robot', linewidth=1, alpha=0.5)
     return plot
 
 def move_up(coords, offset):
-    return (coords[0], coords[1] + offset)
+    return (coords[0] + offset, coords[1])
 
 def rotations_to_rad(rotations):
     return (rotations* np.pi)/180
@@ -53,39 +60,57 @@ def gen_len_array(len, num):
     return np.ones(num) * len
 
 def objective(desired_pos, theta, len):
-    theta_rad = rotations_to_rad(theta)
+    theta_rad = rotations_to_rad(theta[:-1])
     H = rotate_robot(theta_rad, len)
     coords = get_pos(H)
-    #offset_coords = move_up(coords, y)
-    print(coords)
-    l2_norm = np.linalg.norm(desired_pos - coords, 2)
+    offset_coords = move_up(coords,theta[-1])
+    #print(offset_coords)
+    l2_norm = np.linalg.norm(desired_pos - offset_coords, 2)
     return l2_norm
 
 def solve_optimal(len, current_pos, desired_pos):
-    len_arr = gen_len_array(2, len)
+    len_arr = gen_len_array(3, len)
     objective_func = lambda theta: objective(desired_pos, theta, len_arr)
     sol = minimize(objective_func, current_pos)
     return sol.x
 
+def calculate_distances(coordinates):
+    x_coords = coordinates[0]
+    y_coords = coordinates[1]
+    
+    num_points = len(x_coords)
+    distances = np.zeros(num_points - 1)
+    
+    for i in range(num_points - 1):
+        distances[i] = np.sqrt((x_coords[i+1] - x_coords[i])**2 + (y_coords[i+1] - y_coords[i])**2)
+    
+    return distances
+
+
 if __name__ == "__main__":
-    # len = gen_len_array(1, 3)
-    # rotations1 = rotations_to_rad(np.array([0, 0, 0]))
-    # rotations2 = rotations_to_rad(np.array([30, 0, 0]))
-    # rotations3 = rotations_to_rad(np.array([30, 60, 0]))
-    # rotations4 = rotations_to_rad(np.array([30, 60, -30]))
-    #H = rotate_robot(rotations, lens)
-    # H1 = plot_robot(get_pos(rotate_robot(rotations1, len)))
-    # H2 = plot_robot(move_up(get_pos(rotate_robot(rotations2, len)), 0.5))
-    # H3 = plot_robot(move_up(get_pos(rotate_robot(rotations3, len)), 0.5))
-    # H4 = plot_robot(move_up(get_pos(rotate_robot(rotations4, len)), 0.5))
-    # total = [H1, H2, H3, H4]
-    #print(H)
-    #print(get_pos(H))
-    #plot_robot(get_pos(H))
-    # ani = animation.ArtistAnimation(fig=fig, artists=total, interval=500)
-    path = np.array([[0, 1, 1, 2 , 3],[0, 1, 2, 2, 3]])
-    plotPath(path)
-    coords = solve_optimal(4, [0, 0, 0, 0], path)
-    plot_robot(get_pos(rotate_robot(rotations_to_rad(coords), gen_len_array(1, 4))))
-    print(coords)
-    plt.show()
+    path = np.array([[0, 8, 12, 16, 20], [0, 0, 1.5, -1.5, 1.5]])
+
+    x_interp = np.linspace(np.min(path[0]), np.max(path[0]), 100)
+
+    y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic")
+    new_path = [x_interp, y_quadratic(x_interp)]
+    #print(new_path)
+    robot_coords = np.array([[0, 3, 6, 9, 12],[0, 0, 0, 0, 0]])
+    init_conds = [0, 0, 0, 0 ,0]
+    prev_optimal = init_conds
+    for i in range(200):
+        plotPath(new_path)
+        #test_path = np.array([new_path[0][i:i+5], new_path[1][i:i+5]])
+        adjusted_x = robot_coords[0]+0.05
+        next_coords = np.array([adjusted_x, y_quadratic(adjusted_x)])
+        plt.scatter(next_coords[0], next_coords[1], color = "red")
+        optimal_params = solve_optimal(4, [0, 0, 0, 0, 0], next_coords)
+        prev_optimal = optimal_params
+        rot = optimal_params[:-1]
+        offset = optimal_params[-1]
+        robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), gen_len_array(3, 4))), offset)
+        plot_robot(robot_coords)
+        print(calculate_distances(robot_coords))
+        plt.draw()
+        plt.pause(0.01)
+        plt.clf()
