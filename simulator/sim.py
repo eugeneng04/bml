@@ -110,7 +110,7 @@ if __name__ == "__main__":
         offset = optimal_params[-1]
         robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), gen_len_array(3, 4))), offset)
         plot_robot(robot_coords)
-        print(calculate_distances(robot_coords))
+        #print(calculate_distances(robot_coords))
         plt.xlim(0,25)
         plt.ylim(-12.5, 12.5)
         plt.draw()
