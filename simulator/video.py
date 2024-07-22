@@ -53,7 +53,7 @@ while True:
     corners, ids, c = detect_aruco_tag(frame)
     if ids is not None:
         if first_frame and (0 in ids):
-            zero_index = ids.index(0)
+            zero_index = np.where(ids == 0)[0][0]
             h, w, *_ = frame.shape
             scale = pixelToMM(corners[zero_index], 3) # change size of artag here
             first_frame = False
@@ -64,21 +64,23 @@ while True:
             ax.set_title('Center of ARTag')
             ax.grid(True)
             plot = ax.scatter([], [], s = 10)
-        
+        print(corners, ids)
+        aruco.drawDetectedMarkers(frame, corners, ids)
+        pltobjects = []
         for i in range(len(ids)):
-            if ids[i] is not 0:
+            if ids[i] != 0:
                 center, rot = get_rotation_from_corners(corners[i])
-                aruco.drawDetectedMarkers(frame, corners[i], ids[i])
-                plt.scatter(center, label = f"id: {ids[i]}")
-
+                pltobjects.append(plt.scatter(center[0], center[1], label = f"id: {ids[i]}"))
+        plt.legend()       
         plt.draw()
-        plt.delay(0.01)
+        plt.pause(0.01)
+        for i in pltobjects:
+            i.remove()
 
-        cv2.imshow("image", frame)
-        key = cv2.waitKey(1)
-        if key == ord("q"):
-            quit_early = True
-            print("quit early, not saving data")
-            break
+    cv2.imshow("image", frame)
+    key = cv2.waitKey(1)
+    if key == ord("q"):
+        quit_early = True
+        break
 
         

@@ -114,5 +114,5 @@ if __name__ == "__main__":
         plt.xlim(0,25)
         plt.ylim(-12.5, 12.5)
         plt.draw()
-        plt.pause(0.001)
+        plt.pause(0.5)
         plt.clf()
