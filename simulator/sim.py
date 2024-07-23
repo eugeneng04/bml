@@ -64,7 +64,7 @@ def objective(desired_pos, theta, len):
     return l2_norm
 
 def solve_optimal(len, current_pos, desired_pos):
-    len_arr = gen_len_array(3, len)
+    len_arr = gen_len_array(15, len) # edit length of robot here
     objective_func = lambda theta: objective(desired_pos, theta, len_arr)
     sol = minimize(objective_func, current_pos)
     return sol.x
@@ -83,36 +83,44 @@ def calculate_distances(coordinates):
 
 
 if __name__ == "__main__":
-    path = np.array([[0, 8, 12, 16, 20], [0, 0, 1.5, -1.5, 1.5]])
+
+    path = np.array([[0, 25, 48,  60], [0, -24.5, 0, -24.5]])
     # plt.scatter(path[0], path[1], color = "red", label = "user input")
-    x_interp = np.linspace(np.min(path[0]), np.max(path[0]), 100)
+    x_interp = np.linspace(np.min(path[0]), np.max(path[0]) + 60, 100)
 
-    y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic")
-    new_path = [x_interp, y_quadratic(x_interp)]
-    # plotPath(new_path)
-    # plt.legend()
-    # plt.show()
-    #print(new_path)
-
+    y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
+    def y_quadratic_offset(robot_len, x):
+        return_arr = []
+        for x_i in x:
+            if x_i < robot_len - 0.1:
+                return_arr.append(0)
+            else:
+                return_arr.append(y_quadratic(x_i - robot_len))
+        return return_arr
     
-    robot_coords = np.array([[0, 3, 6, 9, 12],[0, 0, 0, 0, 0]])
+    new_path = [x_interp, y_quadratic_offset(60, x_interp)]
+    robot_coords = np.array([[0, 15, 30, 45, 60],[0, 0, 0, 0, 0]])
     init_conds = [0, 0, 0, 0 ,0]
     prev_optimal = init_conds
-    for i in range(200):
+    for i in range(600):
         plotPath(new_path)
         #test_path = np.array([new_path[0][i:i+5], new_path[1][i:i+5]])
-        adjusted_x = robot_coords[0]+0.1
-        next_coords = np.array([adjusted_x, y_quadratic(adjusted_x)])
+        adjusted_x = robot_coords[0]+0.2
+        next_coords = np.array([adjusted_x, y_quadratic_offset(60, adjusted_x)])
+        print(next_coords)
         plt.scatter(next_coords[0], next_coords[1], color = "red")
         optimal_params = solve_optimal(4, prev_optimal, next_coords)
         prev_optimal = optimal_params
         rot = optimal_params[:-1]
         offset = optimal_params[-1]
-        robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), gen_len_array(3, 4))), offset)
-        plot_robot(robot_coords)
+        robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), gen_len_array(15, 4))), offset) # edit length of robot here
+        #plot_robot(robot_coords)
         #print(calculate_distances(robot_coords))
-        plt.xlim(0,25)
-        plt.ylim(-12.5, 12.5)
+        plt.xlim(0,140)
+        plt.ylim(-130, 10)
         plt.draw()
-        plt.pause(0.5)
+        plt.pause(0.001)
         plt.clf()
+    plt.xlim(0,140)
+    plt.ylim(-100, 100)
+    plt.show()

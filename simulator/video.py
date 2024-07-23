@@ -37,7 +37,7 @@ def pixelToMM(corners, mm):
     avg_len = np.mean((top, bottom))
     return mm/avg_len
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 
 first_frame = True
 
