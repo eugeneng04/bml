@@ -37,7 +37,7 @@ def pixelToMM(corners, mm):
     avg_len = np.mean((top, bottom))
     return mm/avg_len
 
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(1)
 
 first_frame = True
 
@@ -52,10 +52,10 @@ while True:
 
     corners, ids, c = detect_aruco_tag(frame)
     if ids is not None:
-        if first_frame and (0 in ids):
-            zero_index = np.where(ids == 0)[0][0]
+        if first_frame and (10 in ids):
+            zero_index = np.where(ids == 10)[0][0]
             h, w, *_ = frame.shape
-            scale = pixelToMM(corners[zero_index], 3) # change size of artag here
+            scale = pixelToMM(corners[zero_index], 8) # change size of artag here
             first_frame = False
             ax.set_xlim(0, w * scale)
             ax.set_ylim(0, h * scale)
@@ -63,14 +63,12 @@ while True:
             ax.set_ylabel('Y-axis (mm)')
             ax.set_title('Center of ARTag')
             ax.grid(True)
-            plot = ax.scatter([], [], s = 10)
         print(corners, ids)
         aruco.drawDetectedMarkers(frame, corners, ids)
         pltobjects = []
         for i in range(len(ids)):
-            if ids[i] != 0:
-                center, rot = get_rotation_from_corners(corners[i])
-                pltobjects.append(plt.scatter(center[0], center[1], label = f"id: {ids[i]}"))
+            center, rot = get_rotation_from_corners(corners[i])
+            pltobjects.append(plt.scatter(center[0] * scale, center[1] * scale, label = f"id: {ids[i]}"))
         plt.legend()       
         plt.draw()
         plt.pause(0.01)
