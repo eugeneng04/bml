@@ -3,6 +3,7 @@ import matplotlib.animation as animation
 import numpy as np
 import scipy.optimize
 import scipy.interpolate
+from collections import deque
 
 fig, ax = plt.subplots() 
 
@@ -58,19 +59,18 @@ def objective(desired_pos, params, len): # objective function for optimization s
     l2_norm = np.linalg.norm(desired_pos - offset_coords, 2)
     return l2_norm
 
-def con1(params): #angle constraints
-    lower_bound = -50 # Example lower bound
-    upper_bound = 50  # Example upper bound
+def con1(params, lower_bound, upper_bound): #angle constraints
+    # lower_bound = -50 # Example lower bound
+    # upper_bound = 50  # Example upper bound
     return [params[i] - lower_bound for i in range(len(params) - 1)] + [upper_bound - params[i] for i in range(len(params) - 1)]
 
-def con2(params):
-    global prev_optimal
+def con2(params, prev_optimal):
     return params[-1] - (prev_optimal[-1]) - 0.1
 
-def solve_optimal(robot_arr, current_pos, desired_pos):
+def solve_optimal(robot_arr, current_pos, desired_pos, prev_optimal, lower_bound, upper_bound):
     objective_func = lambda params: objective(desired_pos, params, robot_arr)
-    sol = scipy.optimize.minimize(objective_func, current_pos, method = "SLSQP", constraints= [{'type': 'ineq', 'fun': con1},
-                                                                                                {'type': 'ineq', 'fun': con2}])
+    sol = scipy.optimize.minimize(objective_func, current_pos, method = "SLSQP", constraints= [{'type': 'ineq', 'fun': lambda params: con1(params, lower_bound, upper_bound)},
+                                                                                                {'type': 'ineq', 'fun': lambda params: con2(params, prev_optimal)}])
     return sol.x
 
 def calculate_distances(coordinates):
@@ -101,56 +101,69 @@ def generateExtendedPath(path, y_func,  offset, straight, iters = 100):
     # offset is how far forwards we should set it to be 
     # straight is the default y value we want for our straight section
     # returns array of x and y values for our new modified path
+
     x_interp = np.linspace(np.min(path[0]), np.max(path[0]) + offset, iters)
-    # y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
     new_path = [x_interp, y_quadratic_offset(offset, x_interp, straight, y_func)]
     return new_path
 
-#def pathFollow(path,)
-
-if __name__ == "__main__":
-    global prev_optimahl
-    path = np.array([[0, 25, 48,  60], [0, -20, 0, -20]])
-    # x_interp = np.linspace(np.min(path[0]), np.max(path[0]) + 60, 100)
-    y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
-
-    # new_path = [x_interp, y_quadratic_offset(60, x_interp, 0, y_quadratic)]
-    new_path = generateExtendedPath(path, y_quadratic, 60, 0, 100)
-    robot_coords = np.array([[0, 15, 30, 45, 60],[0, 0, 0, 0, 0]])
-    init_conds = [0, 0, 0, 0 ,0]
-    robot_array = gen_robot_array(15, 4)
+def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True):
+    q = deque()
+    robot_coords = np.array([np.zeros(len(robot_array) + 1),np.zeros(len(robot_array) + 1)])
+    init_conds = np.zeros(len(robot_array) + 1)
+    # robot_array = gen_robot_array(15, 4)
     prev_optimal = init_conds
 
-    plotPath(new_path, "desired path", "green")
-    plotPath([new_path[0], new_path[1] - np.ones(len(new_path[1])) * 10], "lower bound")
-    plotPath([new_path[0], new_path[1] + np.ones(len(new_path[1])) * 10], "upper bound")
-    plt.xlim(0,140)
-    plt.ylim(-70, 70)
+    if plot:
+        plotPath(new_path, "desired path", "green")
+        plotPath([new_path[0], new_path[1] - np.ones(len(new_path[1])) * 10], "lower bound")
+        plotPath([new_path[0], new_path[1] + np.ones(len(new_path[1])) * 10], "upper bound")
+        plt.xlim(0,np.max(path[0]) + 10)
+        plt.ylim(-(np.max(path[0]) + 10)/2, (np.max(path[0]) + 10)/2)
 
     while np.max(robot_coords[0]) < np.max(new_path[0]):
 
-        adjusted_x = robot_coords[0]+0.1
+        adjusted_x = robot_coords[0] + inc
+
         next_coords = np.array([adjusted_x, y_quadratic_offset(60, adjusted_x, 0, y_quadratic)])
 
 
-        desired_coords = plt.scatter(next_coords[0], next_coords[1], color = "red")
-        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords)
+        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords, prev_optimal, -50, 50)
+
+        q.append(optimal_params)
+
         prev_optimal = optimal_params
+
         rot = optimal_params[:-1]
-        print(rot)
 
         offset = optimal_params[-1]
 
+        robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), robot_array)), offset)
 
-        robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), robot_array)), offset) # edit length of robot here
-        plotted_robot = plot_robot(robot_coords)
-        #print(calculate_distances(robot_coords))
-        plt.draw()
-        plt.pause(0.001)
-        plotted_robot.remove()
-        desired_coords.remove()
+        if plot:
+    
+            desired_coords = plt.scatter(next_coords[0], next_coords[1], color = "red")
+            plotted_robot = plot_robot(robot_coords)
+            #print(calculate_distances(robot_coords))
+            plt.draw()
+            plt.pause(0.001)
+            plotted_robot.remove()
+            desired_coords.remove()
+    
+    if plot:
+        print("press q to quit and save queue")
+        plt.scatter(next_coords[0], next_coords[1], color = "red")
+        plot_robot(robot_coords)
+        plt.show()
 
-    plt.scatter(next_coords[0], next_coords[1], color = "red")
-    plot_robot(robot_coords)
-    plt.show()
+    return q
+
+if __name__ == "__main__":
+    path = np.array([[0, 25, 48,  60], [0, -20, 0, -20]]) # input some points to do extrapolation on
+
+    y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
+
+    new_path = generateExtendedPath(path, y_quadratic, 60, 0, 100)
+    robot_array = gen_robot_array(15, 4)
+    q = pathFollow(new_path, y_quadratic, robot_array, inc = 0.2, plot = False)
+    print(q)
     
