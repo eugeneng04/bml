@@ -6,15 +6,11 @@ import scipy.interpolate
 
 fig, ax = plt.subplots() 
 
-#path = np.array([[0, 1, 2, 3 ,4],[0, 1, 2, 3, 4]]) # x, y
+def plotPath(path, name, color = "black"):
+    plt.plot(path[0], path[1], color = color, label = name)
+    plt.legend()
 
-
-def plotPath(path):
-    plt.plot(path[0], path[1], color = "black", label = "desired path")
-    plt.legend
- 
-def rotate_robot(rot, len): #array of rotation
-    #print(len)
+def rotate_robot(rot, len): # takes in array of angles to rotate and array corresponding to length of robot, returns array of state matrices of every joint
     H = np.eye(3)
     transformations = [H]
     for i in range(rot.size):
@@ -25,12 +21,12 @@ def rotate_robot(rot, len): #array of rotation
                           [0, 1, 0],
                           [0, 0, 1]])
         H = H @ Hrot
-        #transformations.append(H)
         H = H @ Htrans
         transformations.append(H)
+
     return transformations
 
-def get_pos(H):
+def get_pos(H): # takes in transformations, outputs array of the positions of every joint
     x_coords = []
     y_coords = []
     
@@ -41,45 +37,40 @@ def get_pos(H):
     
     return np.array(x_coords), np.array(y_coords)
 
-def plot_robot(coords):
-    plot = plt.plot(coords[0], coords[1], '--bo', label='robot', linewidth=1, alpha=0.5)
+def plot_robot(coords): # plots robot given coordinates from get_pos
+    plot, = plt.plot(coords[0], coords[1], '--bo', label='robot', linewidth=1, alpha=0.5)
     return plot
 
-def move_up(coords, offset):
+def move_up(coords, offset): # offset coordinates because of linear stage
     return (coords[0] + offset, coords[1])
 
-def rotations_to_rad(rotations):
+def rotations_to_rad(rotations): # conversion from degrees to radians
     return (rotations* np.pi)/180
 
-def gen_len_array(len, num):
+def gen_robot_array(len, num): # generate robot array for length of robot with uniform lengths
     return np.ones(num) * len
 
-def objective(desired_pos, theta, len):
-    theta_rad = rotations_to_rad(theta[:-1])
+def objective(desired_pos, params, len): # objective function for optimization solver 
+    theta_rad = rotations_to_rad(params[:-1])
     H = rotate_robot(theta_rad, len)
     coords = get_pos(H)
-    offset_coords = move_up(coords,theta[-1])
-    #print(offset_coords)
+    offset_coords = move_up(coords,params[-1])
     l2_norm = np.linalg.norm(desired_pos - offset_coords, 2)
     return l2_norm
 
-def con1(theta): #angle constraints
-    lower_bound = -85 # Example lower bound
-    upper_bound = 85  # Example upper bound
-    return [theta[i] - lower_bound for i in range(len(theta) - 1)] + [upper_bound - theta[i] for i in range(len(theta) - 1)]
+def con1(params): #angle constraints
+    lower_bound = -50 # Example lower bound
+    upper_bound = 50  # Example upper bound
+    return [params[i] - lower_bound for i in range(len(params) - 1)] + [upper_bound - params[i] for i in range(len(params) - 1)]
 
-def con2(theta):
+def con2(params):
     global prev_optimal
-    return theta[-1] - (prev_optimal[-1])
+    return params[-1] - (prev_optimal[-1]) - 0.1
 
-def con3(theta):
-    return theta[-1] - 0.3
-
-def solve_optimal(len, current_pos, desired_pos):
-    len_arr = gen_len_array(15, len) # edit length of robot here
-    objective_func = lambda theta: objective(desired_pos, theta, len_arr)
-    sol = scipy.optimize.minimize(objective_func, current_pos, method = "SLSQP", constraints=[{'type': 'ineq', 'fun': con1},
-                                                             {'type': 'ineq', 'fun': con2}, {"type": "ineq", "fun": con3}], options={'tol': 1})
+def solve_optimal(robot_arr, current_pos, desired_pos):
+    objective_func = lambda params: objective(desired_pos, params, robot_arr)
+    sol = scipy.optimize.minimize(objective_func, current_pos, method = "SLSQP", constraints= [{'type': 'ineq', 'fun': con1},
+                                                                                                {'type': 'ineq', 'fun': con2}])
     return sol.x
 
 def calculate_distances(coordinates):
@@ -94,16 +85,7 @@ def calculate_distances(coordinates):
     
     return distances
 
-
-if __name__ == "__main__":
-    global prev_optimal
-    #upper_bound = np.array([[0, 25, 48,  60], [12, -24.5 + 12, 12, -24.5 + 12]])
-    path = np.array([[0, 25, 48,  60], [0, -15, 0, -15]])
-    # plt.scatter(path[0], path[1], color = "red", label = "user input")
-    x_interp = np.linspace(np.min(path[0]), np.max(path[0]) + 60, 100)
-    #y_quadratic_upper = scipy.interpolate.interp1d(upper_bound[0], upper_bound[1], kind = "quadratic", fill_value="extrapolate")
-    y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
-    def y_quadratic_offset(robot_len, x, straight, func):
+def y_quadratic_offset(robot_len, x, straight, func):
         return_arr = []
         for x_i in x:
             if x_i < robot_len - 0.2:
@@ -111,39 +93,64 @@ if __name__ == "__main__":
             else:
                 return_arr.append(func(x_i - robot_len))
         return return_arr
-    #new_upper_bound = [x_interp, y_quadratic_offset(60, x_interp, 10, y_quadratic_upper)]
-    #new_lower_bound = [new_upper_bound[0], new_upper_bound[1] - np.ones(len(new_upper_bound[1])) * 18]
-    new_path = [x_interp, y_quadratic_offset(60, x_interp, 0, y_quadratic)]
+
+def generateExtendedPath(path, y_func,  offset, straight, iters = 100): 
+    # generates extended path because of initial offset for the robot
+    # path is a set of points we want to follow
+    # y func is function that will determine our y-values
+    # offset is how far forwards we should set it to be 
+    # straight is the default y value we want for our straight section
+    # returns array of x and y values for our new modified path
+    x_interp = np.linspace(np.min(path[0]), np.max(path[0]) + offset, iters)
+    # y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
+    new_path = [x_interp, y_quadratic_offset(offset, x_interp, straight, y_func)]
+    return new_path
+
+#def pathFollow(path,)
+
+if __name__ == "__main__":
+    global prev_optimahl
+    path = np.array([[0, 25, 48,  60], [0, -20, 0, -20]])
+    # x_interp = np.linspace(np.min(path[0]), np.max(path[0]) + 60, 100)
+    y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
+
+    # new_path = [x_interp, y_quadratic_offset(60, x_interp, 0, y_quadratic)]
+    new_path = generateExtendedPath(path, y_quadratic, 60, 0, 100)
     robot_coords = np.array([[0, 15, 30, 45, 60],[0, 0, 0, 0, 0]])
     init_conds = [0, 0, 0, 0 ,0]
+    robot_array = gen_robot_array(15, 4)
     prev_optimal = init_conds
-    while np.max(robot_coords[0]) < np.max(x_interp):
-        plotPath(new_path)
-        plotPath([new_path[0], new_path[1] - np.ones(len(new_path[1])) * 10])
-        plotPath([new_path[0], new_path[1] + np.ones(len(new_path[1])) * 10])
-        #test_path = np.array([new_path[0][i:i+5], new_path[1][i:i+5]])
+
+    plotPath(new_path, "desired path", "green")
+    plotPath([new_path[0], new_path[1] - np.ones(len(new_path[1])) * 10], "lower bound")
+    plotPath([new_path[0], new_path[1] + np.ones(len(new_path[1])) * 10], "upper bound")
+    plt.xlim(0,140)
+    plt.ylim(-70, 70)
+
+    while np.max(robot_coords[0]) < np.max(new_path[0]):
+
         adjusted_x = robot_coords[0]+0.1
         next_coords = np.array([adjusted_x, y_quadratic_offset(60, adjusted_x, 0, y_quadratic)])
-        plt.scatter(next_coords[0], next_coords[1], color = "red")
-        optimal_params = solve_optimal(4, prev_optimal, next_coords)
+
+
+        desired_coords = plt.scatter(next_coords[0], next_coords[1], color = "red")
+        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords)
         prev_optimal = optimal_params
         rot = optimal_params[:-1]
         print(rot)
+
         offset = optimal_params[-1]
-        robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), gen_len_array(15, 4))), offset) # edit length of robot here
-        plot_robot(robot_coords)
+
+
+        robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), robot_array)), offset) # edit length of robot here
+        plotted_robot = plot_robot(robot_coords)
         #print(calculate_distances(robot_coords))
-        plt.xlim(0,140)
-        plt.ylim(-70, 70)
         plt.draw()
         plt.pause(0.001)
-        plt.clf()
-    plotPath(new_path)
-    plotPath([new_path[0], new_path[1] - np.ones(len(new_path[1])) * 10])
-    plotPath([new_path[0], new_path[1] + np.ones(len(new_path[1])) * 10])
+        plotted_robot.remove()
+        desired_coords.remove()
+
     plt.scatter(next_coords[0], next_coords[1], color = "red")
     plot_robot(robot_coords)
-    plt.xlim(0,140)
-    plt.ylim(-70, 70)
     plt.show()
     

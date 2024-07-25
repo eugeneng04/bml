@@ -37,7 +37,7 @@ def pixelToMM(corners, mm):
     avg_len = np.mean((top, bottom))
     return mm/avg_len
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 first_frame = True
 
@@ -55,7 +55,8 @@ while True:
         if first_frame and (10 in ids):
             zero_index = np.where(ids == 10)[0][0]
             h, w, *_ = frame.shape
-            scale = pixelToMM(corners[zero_index], 8) # change size of artag here
+            scale = pixelToMM(corners[zero_index], 22) # change size of artag here
+            print(scale)
             first_frame = False
             ax.set_xlim(0, w * scale)
             ax.set_ylim(0, h * scale)
@@ -68,7 +69,7 @@ while True:
         pltobjects = []
         for i in range(len(ids)):
             center, rot = get_rotation_from_corners(corners[i])
-            pltobjects.append(plt.scatter(center[0] * scale, center[1] * scale, label = f"id: {ids[i]}"))
+            pltobjects.append(plt.scatter(center[0] * scale, center[1] * scale, label = f"id: {ids[i]}", color = "red"))
         plt.legend()       
         plt.draw()
         plt.pause(0.01)
