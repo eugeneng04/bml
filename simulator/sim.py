@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import numpy as np
 import scipy.optimize
 import scipy.interpolate
-from collections import deque
+
 
 fig, ax = plt.subplots() 
 
@@ -106,30 +105,37 @@ def generateExtendedPath(path, y_func,  offset, straight, iters = 100):
     new_path = [x_interp, y_quadratic_offset(offset, x_interp, straight, y_func)]
     return new_path
 
-def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True):
-    q = deque()
+def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
+    pattern = []
+    offsetArr = []
     robot_coords = np.array([np.zeros(len(robot_array) + 1),np.zeros(len(robot_array) + 1)])
     init_conds = np.zeros(len(robot_array) + 1)
     # robot_array = gen_robot_array(15, 4)
     prev_optimal = init_conds
 
+    yTop, yBot = genRotationToPressureFunc()
+
+
     if plot:
-        plotPath(new_path, "desired path", "green")
-        plotPath([new_path[0], new_path[1] - np.ones(len(new_path[1])) * 10], "lower bound")
-        plotPath([new_path[0], new_path[1] + np.ones(len(new_path[1])) * 10], "upper bound")
+        plotPath(path, "desired path", "green")
+        plotPath([path[0], path[1] - np.ones(len(path[1])) * 10], "lower bound")
+        plotPath([path[0], path[1] + np.ones(len(path[1])) * 10], "upper bound")
         plt.xlim(0,np.max(path[0]) + 10)
         plt.ylim(-(np.max(path[0]) + 10)/2, (np.max(path[0]) + 10)/2)
 
-    while np.max(robot_coords[0]) < np.max(new_path[0]):
+    while np.max(robot_coords[0]) < np.max(path[0]):
 
         adjusted_x = robot_coords[0] + inc
 
         next_coords = np.array([adjusted_x, y_quadratic_offset(60, adjusted_x, 0, y_quadratic)])
 
+        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords, prev_optimal, -45, 65)
 
-        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords, prev_optimal, -50, 50)
+        pattern_i, offset_i = convertParams(optimal_params, prev_optimal, yTop, yBot)
 
-        q.append(optimal_params)
+        #q.append(optimal_params_converted)
+        pattern.append(pattern_i)
+        offsetArr.append(offset_i)
 
         prev_optimal = optimal_params
 
@@ -155,15 +161,64 @@ def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True):
         plot_robot(robot_coords)
         plt.show()
 
-    return q
+    return pattern, offsetArr
+
+def genRotationToPressureFunc(): #helper function that generates function, want to map angle input to kpi output
+    topCurve = [[-45, -25, 0, 25, 65], [-172, -20, 22, 40, 172]]
+    bottomCurve = [[-45, -25, 0, 25, 65], [-172, -75, -20, 0, 172]]
+    x = np.linspace(-45, 65, 100)
+    yTop = scipy.interpolate.interp1d(topCurve[0], topCurve[1], kind = "cubic")
+    yBot = scipy.interpolate.interp1d(bottomCurve[0], bottomCurve[1], kind = "cubic")
+    return yTop, yBot #assume yTop is when its left to right (increasing angle), yBot is right to left (decreasing)
+
+def rotationToPressure(angle, func): # maps rotation to pressure, input is pressure angle, output is a [left, right] where right is positive, left is negative
+    #increasing is 1 if going left to right, -1 is when going right to left
+    kpiToPsi_factor = 0.145038
+    if angle > 0:
+        return [0, abs(func(angle) * kpiToPsi_factor)]
+    return [abs(func(angle) * kpiToPsi_factor), 0]
+
+
+def convertParams(params, prevParams, yTop, yBot): # convert our output of path follow to pressure input for run_stm, input is queue which is output of pathFollow
+    rot = np.array(params[:-1])
+    prevRot = np.array(prevParams[:-1])
+    offset = params[-1]
+
+    pressureArr = []
+
+    deltaRot = rot - prevRot
+    for i in range(len(rot)):
+        if deltaRot[i] > 0: #increasing
+            pressureIn = rotationToPressure(rot[i], yTop)
+        else:
+            pressureIn = rotationToPressure(rot[i], yBot)
+        pressureArr += pressureIn
+
+    return pressureArr, offset
+
 
 if __name__ == "__main__":
     path = np.array([[0, 25, 48,  60], [0, -20, 0, -20]]) # input some points to do extrapolation on
 
     y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
 
+    plt.axhline(y = 0, linestyle = "dashed", color = "orange", label = "linear slider")
+    plt.legend()
     new_path = generateExtendedPath(path, y_quadratic, 60, 0, 100)
     robot_array = gen_robot_array(15, 4)
-    q = pathFollow(new_path, y_quadratic, robot_array, inc = 0.2, plot = False)
-    print(q)
+    pattern, offsetArr = pathFollow(new_path, y_quadratic, robot_array, inc = 0.2, plot = True)
+    print(pattern)
+
+    #print(offsetArr)
+
+    # x = np.linspace(-45, 65, 100)
+    # yTop, yBot = genRotationToPressureFunc()
+    # topCurve = [yTop(x), x]
+    # botCurve = [yBot(x), x]
+    # plotPath(topCurve, "top", "red")
+    # plotPath(botCurve, "bot", "blue")
+    # plt.ylabel("angle (deg)")
+    # plt.xlabel("pressure (kpi)")
+    # plt.ylim(-100,100)
+    # plt.show()
     
