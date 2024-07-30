@@ -108,6 +108,7 @@ def generateExtendedPath(path, y_func,  offset, straight, iters = 100):
 def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
     pattern = []
     offsetArr = []
+    robotArr = []
     robot_coords = np.array([np.zeros(len(robot_array) + 1),np.zeros(len(robot_array) + 1)])
     init_conds = np.zeros(len(robot_array) + 1)
     # robot_array = gen_robot_array(15, 4)
@@ -144,7 +145,7 @@ def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
         offset = optimal_params[-1]
 
         robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), robot_array)), offset)
-
+        robotArr.append(robot_coords)
         if plot:
     
             desired_coords = plt.scatter(next_coords[0], next_coords[1], color = "red")
@@ -161,7 +162,7 @@ def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
         plot_robot(robot_coords)
         plt.show()
 
-    return pattern, offsetArr
+    return pattern, offsetArr, robotArr
 
 def genRotationToPressureFunc(): #helper function that generates function, want to map angle input to kpi output
     topCurve = [[-45, -25, 0, 25, 65], [-172, -20, 22, 40, 172]]
