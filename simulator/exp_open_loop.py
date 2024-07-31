@@ -9,10 +9,10 @@ import utils_file
 import matplotlib.pyplot as plt
 
 def genPattern(new_path, y_quadratic):
-    robot_array = sim.gen_robot_array(15, 4)
-    pattern, offsetArr, robotArr = sim.pathFollow(new_path, y_quadratic, robot_array, inc = 0.2, plot = True)
+    robot_array = sim.gen_robot_array(15, 5)
+    pattern, offsetArr, robotArr, rotArr = sim.pathFollow(new_path, y_quadratic, robot_array, inc = 0.2, plot = True)
     
-    return pattern, offsetArr, robotArr
+    return pattern, offsetArr, robotArr, rotArr
 
 # def control_loop(q_output, result_folder, pattern): 
 #     global regulator_vals, solenoid_vals
@@ -76,8 +76,8 @@ if __name__ == '__main__':
 
         y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
 
-        new_path = sim.generateExtendedPath(path, y_quadratic, 60, 0, 100)
-        pattern, offsetArr, robotArr = genPattern(new_path, y_quadratic)
+        new_path = sim.generateExtendedPath(path, y_quadratic, 75, 0, 100)
+        pattern, offsetArr, robotArr, rotArr = genPattern(new_path, y_quadratic)
 
 
         if utils_file.isPath(f"{folder_name}/data.pickle"):
@@ -86,11 +86,12 @@ if __name__ == '__main__':
             saved_data["pattern"] = pattern
             saved_data["offsetArr"] = offsetArr
             saved_data["robotArr"] = robotArr
+            saved_data["rotArr"] = rotArr
 
             utils_file.saveFile(folder_name, saved_data)
             
         else:
-            data = {"pattern": pattern, "offsetArr": offsetArr, "robotArr": robotArr}
+            data = {"pattern": pattern, "offsetArr": offsetArr, "robotArr": robotArr, "rotArr": rotArr}
             utils_file.saveFile(folder_name, data)
 
     else:
@@ -99,6 +100,7 @@ if __name__ == '__main__':
         pattern = saved_data["pattern"]
         offsetArr = saved_data["offsetArr"]
         robotArr = saved_data["robotArr"]
+        rotArr = saved_data["rotArr"]
 
     #print(pattern, offsetArr)
     # for d in offsetArr:
@@ -109,7 +111,7 @@ if __name__ == '__main__':
 
     y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
 
-    new_path = sim.generateExtendedPath(path, y_quadratic, 60, 0, 100)
+    new_path = sim.generateExtendedPath(path, y_quadratic, 75, 0, 100)
     sim.plotPath(new_path, "desired path", "green")
     plt.xlim(0,np.max(new_path[0]) + 10)
     plt.ylim(-(np.max(new_path[0]) + 10)/2, (np.max(new_path[0]) + 10)/2)
@@ -118,6 +120,7 @@ if __name__ == '__main__':
         if i % 10 == 0:
             plotted_robot = sim.plot_robot(robotArr[i])
             print(pattern[i])
+            print(rotArr[i])
             plt.draw()
             input("input any char to view next: ")
             plotted_robot.remove()

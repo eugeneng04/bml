@@ -109,6 +109,7 @@ def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
     pattern = []
     offsetArr = []
     robotArr = []
+    rotArr = []
     robot_coords = np.array([np.zeros(len(robot_array) + 1),np.zeros(len(robot_array) + 1)])
     init_conds = np.zeros(len(robot_array) + 1)
     # robot_array = gen_robot_array(15, 4)
@@ -128,7 +129,7 @@ def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
 
         adjusted_x = robot_coords[0] + inc
 
-        next_coords = np.array([adjusted_x, y_quadratic_offset(60, adjusted_x, 0, y_quadratic)])
+        next_coords = np.array([adjusted_x, y_quadratic_offset(75, adjusted_x, 0, y_quadratic)])
 
         optimal_params = solve_optimal(robot_array, prev_optimal, next_coords, prev_optimal, -45, 65)
 
@@ -146,6 +147,7 @@ def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
 
         robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), robot_array)), offset)
         robotArr.append(robot_coords)
+        rotArr.append(rot)
         if plot:
     
             desired_coords = plt.scatter(next_coords[0], next_coords[1], color = "red")
@@ -161,8 +163,7 @@ def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
         plt.scatter(next_coords[0], next_coords[1], color = "red")
         plot_robot(robot_coords)
         plt.show()
-
-    return pattern, offsetArr, robotArr
+    return pattern, offsetArr, robotArr, rotArr
 
 def genRotationToPressureFunc(): #helper function that generates function, want to map angle input to kpi output
     topCurve = [[-45, -25, 0, 25, 65], [-172, -20, 22, 40, 172]]
@@ -176,8 +177,8 @@ def rotationToPressure(angle, func): # maps rotation to pressure, input is press
     #increasing is 1 if going left to right, -1 is when going right to left
     kpiToPsi_factor = 0.145038
     if angle > 0:
-        return [0, abs(func(angle) * kpiToPsi_factor)]
-    return [abs(func(angle) * kpiToPsi_factor), 0]
+        return [abs(func(angle) * kpiToPsi_factor), 0]
+    return [0, abs(func(angle) * kpiToPsi_factor)]
 
 
 def convertParams(params, prevParams, yTop, yBot): # convert our output of path follow to pressure input for run_stm, input is queue which is output of pathFollow
@@ -187,9 +188,9 @@ def convertParams(params, prevParams, yTop, yBot): # convert our output of path 
 
     pressureArr = []
 
-    deltaRot = rot - prevRot
+    #deltaRot = rot - prevRot
     for i in range(len(rot)):
-        if deltaRot[i] > 0: #increasing
+        if rot[i] > 0: #increasing
             pressureIn = rotationToPressure(rot[i], yTop)
         else:
             pressureIn = rotationToPressure(rot[i], yBot)
@@ -205,8 +206,8 @@ if __name__ == "__main__":
 
     plt.axhline(y = 0, linestyle = "dashed", color = "orange", label = "linear slider")
     plt.legend()
-    new_path = generateExtendedPath(path, y_quadratic, 60, 0, 100)
-    robot_array = gen_robot_array(15, 4)
+    new_path = generateExtendedPath(path, y_quadratic, 75, 0, 100)
+    robot_array = gen_robot_array(15, 5)
     pattern, offsetArr = pathFollow(new_path, y_quadratic, robot_array, inc = 0.2, plot = True)
     print(pattern)
 
