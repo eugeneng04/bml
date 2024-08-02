@@ -62,9 +62,10 @@ def control_loop(q_output, result_folder):
                         for k in range(2):
                             pattern_arr = [0, 5, 10, 15, 20, 25, 30, 35]
                             for val in pattern_arr:
-                                regulator_vals = np.zeros(12)
+                                temp = np.zeros(12)
 
-                                regulator_vals[2*i + k] = val
+                                temp[2*i + k] = val
+                                regulator_vals = temp
                                 print(regulator_vals)
                                 makePressureCmd()
                                 time.sleep(time_per_step)

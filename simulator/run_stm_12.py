@@ -142,7 +142,7 @@ def makePressureCmdString(regulator_vals):
 def makePressureCmd():
     global regulator_vals, solenoid_vals
     message_arr = makePressureCmdString(regulator_vals)
-    print("message_arr:" + message_arr)
+    print(message_arr)
     for message in message_arr:
         sendQ.put(message+b'\n')
     if not (solenoid_vals is None):
