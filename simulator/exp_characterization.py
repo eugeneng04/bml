@@ -7,7 +7,7 @@ import characterization
 
 camStop = threading.Event()
 camStop.clear()
-video = cv2.VideoCapture(0)
+video = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 def cameraThread():
     if (video.isOpened() == False):  
@@ -39,7 +39,7 @@ def control_loop(q_output, result_folder):
     #camThread.start()
     characterizationThread = threading.Thread(group = None, target = characterization.calcAngle, name="angleThread")
     characterizationThread.daemon = False
-    characterizationThread.start()
+    #characterizationThread.start()
     global regulator_vals, solenoid_vals
     global charStart
     i = 0
