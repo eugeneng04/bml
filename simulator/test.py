@@ -1,16 +1,7 @@
 import utils_file
-import cv2
 
 folder_name = f"{utils_file.getCurrPath()}/logs/test"
 
-video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-ret, frame = video.read()
-if not ret:
-    print("failed to grab frame")
-
-folder_name = f"{folder_name}/images"
-img_name = f"{folder_name}/capture.png"
-print(img_name)
-cv2.imwrite(img_name, frame)
-cv2.imshow("Frame", frame)
-cv2.waitKey(0)
+print("Using Saved Data")
+saved_data = utils_file.openFile(f"{folder_name}")
+print(saved_data)
