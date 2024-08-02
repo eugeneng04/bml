@@ -35,7 +35,7 @@ def control_loop(q_output, result_folder):
     #camera stuff
     camThread = threading.Thread(group=None, target=cameraThread, name="cameraThread")
     camThread.daemon = False  # want clean file close
-    camThread.start()
+    #camThread.start()
 
     global regulator_vals, solenoid_vals
     global charStart
