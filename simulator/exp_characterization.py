@@ -51,7 +51,7 @@ def control_loop(q_output, result_folder):
     makeCmd('PRNWAIT', 1000)   # set wait time for state update in ms
     time.sleep(3)
     print('control_loop: started thread')
-    time_per_step = 15
+    time_per_step = 2
 
     while (not controlStop.is_set()):
         if not stateQ.empty():
@@ -61,6 +61,8 @@ def control_loop(q_output, result_folder):
             else:
                 print("characterization starts")
                 dumpOut = []
+                folder_name_new = f"{folder_name}/images"
+                utils_file.pathLogic(folder_name)
                 for i in range(4): # 4 actuators
                     for j in range(1): #we want to do this 1 times
                         for k in range(2):
@@ -84,7 +86,7 @@ def control_loop(q_output, result_folder):
                                 if key == ord("q"):
                                     break
                                 # we can just dump filename and regulator values in a tuple list 
-                                img_name = f"{folder_name}/images/capture_{2*i+k}_{val}_psi_{j}.png"
+                                img_name = f"{folder_name_new}/capture_{2*i+k}_{val}_psi_{j}.png"
                                 dumpOut.append((regulator_vals, f"/images/capture_{2*i+k}_{val}_psi_{j}.png"))
                                 cv2.imwrite(img_name, frame)
 
@@ -122,8 +124,9 @@ if __name__ == '__main__':
 
     parser.add_argument("name", help = "folder for name of file")
     parser.add_argument("--dump", action="store_false", help = "whether to use saved output")
+    utils_file.createLogFolder(parser.parse_args().name)
     folder_name = f"{utils_file.getCurrPath()}/logs/{parser.parse_args().name}"
-
+    
     flag = utils_file.validData(folder_name, "pattern")
 
     # for i in range(4): # 4 actuators

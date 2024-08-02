@@ -8,7 +8,8 @@ ret, frame = video.read()
 if not ret:
     print("failed to grab frame")
 
-img_name = f"{folder_name}/images/capture.png"
+folder_name = f"{folder_name}/images"
+img_name = f"{folder_name}/capture.png"
 print(img_name)
 cv2.imwrite(img_name, frame)
 cv2.imshow("Frame", frame)

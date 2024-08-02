@@ -39,3 +39,8 @@ def openFile(folder_name):
 def saveFile(folder_name, data):
     with open(f'{folder_name}/data.pickle', 'wb') as handle:
                     pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+def pathLogic(path):
+    isExist = os.path.exists(path)
+    if not isExist:
+        os.makedirs(path)
