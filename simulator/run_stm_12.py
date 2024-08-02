@@ -41,7 +41,7 @@ print('ports being used:')
 print([port.device for port in serial.tools.list_ports.comports()])
 
 #### CONSTANTS ###########
-data_file_name = '/Data/data.txt'
+data_file_name = './Data/data.txt'
 telemetry = False
 numSamples = 20 # 1 kHz sampling in pid loop = 3 sec
 INTERVAL = 0.1  # update rate for state information

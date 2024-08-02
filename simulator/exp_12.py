@@ -65,7 +65,7 @@ def control_loop(q_output, result_folder):
                                 regulator_vals = np.zeros(12)
 
                                 regulator_vals[2*i + k] = val
-
+                                print(regulator_vals)
                                 makePressureCmd()
                                 time.sleep(time_per_step)
                                 ret, frame = video.read()
