@@ -339,7 +339,7 @@ def main(control_loop, q_output, result_folder, use_force=False):
     stateThread = threading.Thread(group=None, target=rcvstate, name="stateThread")
     stateThread.daemon = False  # want clean file close
     rcvStop.clear()
-    #stateThread.start()
+    stateThread.start()
     time.sleep(5)  # give time to catch up with printing
 
 # =============================================================================
