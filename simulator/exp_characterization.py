@@ -78,7 +78,11 @@ def control_loop(q_output, result_folder):
                                 if not ret:
                                     print("failed to grab frame")
                                     break
+
                                 cv2.imshow("frame", frame)
+                                key = cv2.waitKey(1)
+                                if key == ord("q"):
+                                    break
                                 # we can just dump filename and regulator values in a tuple list 
                                 img_name = f"{folder_name}/images/capture_{2*i+k}_{val}_psi_{j}.png"
                                 dumpOut.append((regulator_vals, f"/images/capture_{2*i+k}_{val}_psi_{j}.png"))
