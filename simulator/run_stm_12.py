@@ -141,7 +141,7 @@ def makePressureCmdString(regulator_vals):
 
 def makePressureCmd_new(regulator_vals):
     message_arr = makePressureCmdString(regulator_vals)
-    print(message_arr)
+    #print(message_arr)
     for message in message_arr:
         sendQ.put(message+b'\n')
 

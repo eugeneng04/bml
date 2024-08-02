@@ -49,28 +49,29 @@ tag_dict = {10: 0, # key: actual tag, value = index of robot
             1: 2}
 
 def calcAngle(): #Thread
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
     #frame = cv2.imread("test_data_1.jpg")
     while True:
         ret, frame = cap.read()
         corners, ids, c = detect_aruco_tag(frame)
-        aruco.drawDetectedMarkers(frame, corners, ids)
-        centerDict = {}
-        for i in range(len(ids)):
-            center, rot = get_rotation_from_corners(corners[i])
-            if int(ids[i][0]) in tag_dict:
-                centerDict[tag_dict[int(ids[i][0])]] = center
+        if ids is not None:
+            aruco.drawDetectedMarkers(frame, corners, ids)
+            centerDict = {}
+            for i in range(len(ids)):
+                center, rot = get_rotation_from_corners(corners[i])
+                if int(ids[i][0]) in tag_dict:
+                    centerDict[tag_dict[int(ids[i][0])]] = center
 
-        cv2.imshow("img", frame)
-        key = cv2.waitKey(1)
-        if key == ord("q"):
-            quit_early = True
-            break
-        angleArr = []
-        for i in range(len(centerDict) - 2):
-            angleArr.append(getAngle(centerDict[i], centerDict[i+1], centerDict[i+2]))
+            cv2.imshow("img", frame)
+            key = cv2.waitKey(1)
+            if key == ord("q"):
+                quit_early = True
+                break
+            angleArr = []
+            for i in range(len(centerDict) - 2):
+                angleArr.append(getAngle(centerDict[i], centerDict[i+1], centerDict[i+2]))
 
-        print(angleArr)
+            print(angleArr)
 
 if __name__ == "__main__":
     cap = cv2.VideoCapture(0)
