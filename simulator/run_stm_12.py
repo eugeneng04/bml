@@ -62,7 +62,7 @@ charStart.clear()
 charStop = threading.Event()
 charStop.clear()
 
-ser = serial.Serial('/dev/cu.usbmodem1203')
+ser = serial.Serial('COM8')
 ser.baudrate=230400
 
 class StateStruct():
@@ -339,7 +339,7 @@ def main(control_loop, q_output, result_folder, use_force=False):
     stateThread = threading.Thread(group=None, target=rcvstate, name="stateThread")
     stateThread.daemon = False  # want clean file close
     rcvStop.clear()
-    stateThread.start()
+    #stateThread.start()
     time.sleep(5)  # give time to catch up with printing
 
 # =============================================================================

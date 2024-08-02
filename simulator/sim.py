@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize
 import scipy.interpolate
+import robot_characterization
 
 
 fig, ax = plt.subplots() 
@@ -58,10 +59,10 @@ def objective(desired_pos, params, len): # objective function for optimization s
     l2_norm = np.linalg.norm(desired_pos - offset_coords, 2)
     return l2_norm
 
-def con1(params, lower_bound, upper_bound): #angle constraints
+def con1(params, lower_bound_arr, upper_bound_arr): #angle constraints
     # lower_bound = -50 # Example lower bound
     # upper_bound = 50  # Example upper bound
-    return [params[i] - lower_bound for i in range(len(params) - 1)] + [upper_bound - params[i] for i in range(len(params) - 1)]
+    return [params[i] - lower_bound_arr[i] for i in range(len(params) - 1)] + [upper_bound_arr[i] - params[i] for i in range(len(params) - 1)]
 
 def con2(params, prev_optimal):
     return params[-1] - (prev_optimal[-1]) - 0.1
@@ -129,11 +130,13 @@ def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
 
         adjusted_x = robot_coords[0] + inc
 
-        next_coords = np.array([adjusted_x, y_quadratic_offset(75, adjusted_x, 0, y_quadratic)])
+        next_coords = np.array([adjusted_x, y_quadratic_offset(60, adjusted_x, 0, y_quadratic)])
 
-        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords, prev_optimal, -45, 65)
+        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords, prev_optimal, [-33, -55, -48, -49], [70, 70, 45, 35])
 
-        pattern_i, offset_i = convertParams(optimal_params, prev_optimal, yTop, yBot)
+        #pattern_i, offset_i = convertParams(optimal_params, prev_optimal, yTop, yBot)
+
+        pattern_i, offset_i = convertParams_new(optimal_params)
 
         #q.append(optimal_params_converted)
         pattern.append(pattern_i)
@@ -198,6 +201,23 @@ def convertParams(params, prevParams, yTop, yBot): # convert our output of path 
 
     return pressureArr, offset
 
+global characterized_act
+characterized_act = robot_characterization.get_functions()
+
+def convertParams_new(params):
+    global characterized_act # odd goes left, even goes right, 1 indexed
+    pressureArr = []
+    rot = params[:-1]
+    offset = params[-1]
+
+    for i in range(len(rot)): # positive will be left, negative right
+        if rot[i] > 0:
+            pressureArr += [characterized_act[2 * i + 1](abs(rot[i])), 0]
+        else:
+            print(2*i)
+            pressureArr += [0, characterized_act[2 * i](abs(rot[i]))]
+        
+    return pressureArr, offset
 
 if __name__ == "__main__":
     path = np.array([[0, 25, 48,  60], [0, -20, 0, -20]]) # input some points to do extrapolation on
@@ -206,9 +226,9 @@ if __name__ == "__main__":
 
     plt.axhline(y = 0, linestyle = "dashed", color = "orange", label = "linear slider")
     plt.legend()
-    new_path = generateExtendedPath(path, y_quadratic, 75, 0, 100)
-    robot_array = gen_robot_array(15, 5)
-    pattern, offsetArr = pathFollow(new_path, y_quadratic, robot_array, inc = 0.2, plot = True)
+    new_path = generateExtendedPath(path, y_quadratic, 60, 0, 100)
+    robot_array = gen_robot_array(15, 4)
+    pattern, offsetArr, robotArr, rotArr = pathFollow(new_path, y_quadratic, robot_array, inc = 0.2, plot = True)
     print(pattern)
 
     #print(offsetArr)

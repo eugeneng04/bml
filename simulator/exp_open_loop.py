@@ -9,7 +9,7 @@ import utils_file
 import matplotlib.pyplot as plt
 
 def genPattern(new_path, y_quadratic):
-    robot_array = sim.gen_robot_array(15, 5)
+    robot_array = sim.gen_robot_array(15, 4)
     pattern, offsetArr, robotArr, rotArr = sim.pathFollow(new_path, y_quadratic, robot_array, inc = 0.2, plot = True)
     
     return pattern, offsetArr, robotArr, rotArr
@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
         y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
 
-        new_path = sim.generateExtendedPath(path, y_quadratic, 75, 0, 100)
+        new_path = sim.generateExtendedPath(path, y_quadratic, 60, 0, 100)
         pattern, offsetArr, robotArr, rotArr = genPattern(new_path, y_quadratic)
 
 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
     y_quadratic = scipy.interpolate.interp1d(path[0], path[1], kind = "quadratic", fill_value="extrapolate")
 
-    new_path = sim.generateExtendedPath(path, y_quadratic, 75, 0, 100)
+    new_path = sim.generateExtendedPath(path, y_quadratic, 60, 0, 100)
     sim.plotPath(new_path, "desired path", "green")
     plt.xlim(0,np.max(new_path[0]) + 10)
     plt.ylim(-(np.max(new_path[0]) + 10)/2, (np.max(new_path[0]) + 10)/2)

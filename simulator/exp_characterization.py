@@ -89,7 +89,7 @@ def control_loop(q_output, result_folder):
 
     print('control_loop: finished thread')
     camStop.set() # custom camera thread
-    cameraStop.set()
+    #cameraStop.set()
 
 if __name__ == '__main__':
     import argparse
