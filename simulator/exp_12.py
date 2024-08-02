@@ -48,7 +48,10 @@ def control_loop(q_output, result_folder):
     makeCmd('PRNWAIT', 1000)   # set wait time for state update in ms
     time.sleep(3)
     print('control_loop: started thread')
-    time_per_step = 15
+    time_per_step = 1
+
+    regulator_vals =  np.array([0, 0, 0, 25, 0, 25, 0, 0])*1.
+    makePressureCmd()
 
     while (not controlStop.is_set()):
         if not stateQ.empty():
