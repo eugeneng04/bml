@@ -141,6 +141,7 @@ def makePressureCmdString(regulator_vals):
 
 def makePressureCmd():
     global regulator_vals, solenoid_vals
+    print(regulator_vals)
     message_arr = makePressureCmdString(regulator_vals)
     print(message_arr)
     for message in message_arr:
