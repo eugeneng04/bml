@@ -60,22 +60,28 @@ def control_loop(q_output, result_folder):
                 time.sleep(1)  # should run at state update rate                
             else:
                 print("characterization starts")
+                dumpOut = []
                 for i in range(4): # 4 actuators
                     for j in range(1): #we want to do this 1 times
                         for k in range(2):
                             pattern_arr = [0, 5, 10, 15, 20, 25, 30, 35]
                             for val in pattern_arr:
-                                regulator_vals = np.zeros(12)
+                                global regulator_vals
+                                temp = np.zeros(12)
 
-                                regulator_vals[2*i + k] = val
-
-                                makePressureCmd()
+                                temp[2*i + k] = val
+                                regulator_vals = temp
+                                #print(regulator_vals)
+                                makePressureCmd_new(regulator_vals)
                                 time.sleep(time_per_step)
                                 ret, frame = video.read()
                                 if not ret:
                                     print("failed to grab frame")
                                     break
-                                img_name = f"{folder_name}/capture_{2*i+k}_{val}_psi_{j}.png"
+                                cv2.imshow("frame", frame)
+                                # we can just dump filename and regulator values in a tuple list 
+                                img_name = f"{folder_name}/images/capture_{2*i+k}_{val}_psi_{j}.png"
+                                dumpOut.append((regulator_vals, f"/images/capture_{2*i+k}_{val}_psi_{j}.png"))
                                 cv2.imwrite(img_name, frame)
 
                                 if controlStop.is_set():
@@ -91,6 +97,16 @@ def control_loop(q_output, result_folder):
             time.sleep(1)
 
     print('control_loop: finished thread')
+    print("saving data")
+    if utils_file.isPath(f"{folder_name}/data.pickle"):
+            saved_data = utils_file.openFile(folder_name)
+
+            saved_data["dumpOut"] = dumpOut
+            utils_file.saveFile(folder_name, saved_data)
+    else:
+        data = {"dumpOut": dumpOut}
+        utils_file.saveFile(folder_name, data)
+
     camStop.set() # custom camera thread
     #cameraStop.set()
 
