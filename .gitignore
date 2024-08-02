@@ -1,6 +1,5 @@
 naneye/exp_4_1.py
 naneye/logs/*
-# simulator/logs/*
 env
 __pycache__
 .DS_Store
