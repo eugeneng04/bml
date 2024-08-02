@@ -3,6 +3,7 @@ import numpy as np
 from run_stm_12 import *
 import argparse
 import utils_file
+import characterization
 
 camStop = threading.Event()
 camStop.clear()
@@ -36,7 +37,9 @@ def control_loop(q_output, result_folder):
     camThread = threading.Thread(group=None, target=cameraThread, name="cameraThread")
     camThread.daemon = False  # want clean file close
     #camThread.start()
-
+    characterizationThread = threading.Thread(group = None, target = characterization.calcAngle, name="angleThread")
+    characterizationThread.daemon = False
+    characterizationThread.start()
     global regulator_vals, solenoid_vals
     global charStart
     i = 0
