@@ -1,0 +1,2 @@
+"Data file recorded 2024/8/1  20:9:31"
+" time  hx711, qdec3, qdec5, adc8,  adc9, adc10, adc11, adc12, adc13, adc14, adc15"

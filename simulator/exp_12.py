@@ -6,7 +6,12 @@ import utils_file
 
 camStop = threading.Event()
 camStop.clear()
-video = cv2.VideoCapture(0)
+video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+ret, frame = video.read()
+if not ret:
+    print("failed to grab frame")
+
+cv2.imshow("frame", frame)
 
 def cameraThread():
     if (video.isOpened() == False):  
@@ -77,6 +82,7 @@ def control_loop(q_output, result_folder):
                                 if not ret:
                                     print("failed to grab frame")
                                     break
+                                cv2.imshow("frame", frame)
                                 img_name = f"{folder_name}/capture_{2*i+k}_{val}_psi_{j}.png"
                                 cv2.imwrite(img_name, frame)
 

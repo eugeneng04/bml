@@ -62,7 +62,7 @@ charStart.clear()
 charStop = threading.Event()
 charStop.clear()
 
-ser = serial.Serial('COM8')
+ser = serial.Serial('COM3')
 ser.baudrate=230400
 
 class StateStruct():
