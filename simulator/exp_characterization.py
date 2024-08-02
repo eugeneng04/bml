@@ -39,7 +39,9 @@ def control_loop(q_output, result_folder):
     #camThread.start()
     characterizationThread = threading.Thread(group = None, target = characterization.calcAngle, name="angleThread")
     characterizationThread.daemon = False
-    #characterizationThread.start()
+
+    #characterizationThread.start() # uncomment this to view angles
+
     global regulator_vals, solenoid_vals
     global charStart
     i = 0
