@@ -25,7 +25,7 @@ def control_loop(q_output, result_folder):
     print('control_loop: started thread')
     time_per_step = 1
 
-    p_controller = controller.controller(2, 1)
+    p_controller = controller.p_controller(2, 1)
     p_controller.set_target(-15)
 
 
