@@ -18,7 +18,7 @@ class p_controller():
             self.exit = True
         output = self.kp * error
         print(output)
-        return (output + actualAngle)
+        return output + actualAngle
     
     def convert(self, compute): # return pressure values
         out = np.zeros(12)
@@ -31,8 +31,8 @@ class p_controller():
 
 
 if __name__ == "__main__":
-    controller = p_controller(3, 1.1)
-    controller.set_target(-15)
-    computed = controller.compute(-30)
-    print(computed)
-    print(controller.convert(computed))
+    controller = p_controller(2, 1.5)
+    controller.set_target(0)
+    print(controller.convert(controller.compute(1)))
+    # print(controller.convert(-1))
+   
