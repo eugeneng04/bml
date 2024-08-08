@@ -52,7 +52,7 @@ tag_dict = {4: 0, # key: actual tag, value = index of robot
             5: 5}
 
 
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 def calcAngle(): #Thread
     #frame = cv2.imread("test_data_1.jpg")

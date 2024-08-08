@@ -28,6 +28,7 @@ def control_loop(q_output, result_folder):
     p_controller = controller.controller(2, 1)
     targets = [0, 5, 10, 15, 0]
 
+
     while (not controlStop.is_set()):
         if not stateQ.empty():
             if not charStart.is_set():
