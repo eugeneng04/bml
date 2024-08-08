@@ -26,8 +26,7 @@ def control_loop(q_output, result_folder):
     time_per_step = 1
 
     p_controller = controller.controller(2, 1)
-    p_controller.set_target(-15)
-
+    targets = [0, 5, 10, 15, 0]
 
     while (not controlStop.is_set()):
         if not stateQ.empty():
@@ -37,14 +36,18 @@ def control_loop(q_output, result_folder):
             else:
                 print("characterization starts")
                 global regulator_vals
-                while p_controller.exit == False:
-                    angles = characterization.calcAngleLive()
-                    actual_angle = angles[2]
+                for target in targets:
+                    p_controller.set_target(target)
+                    while p_controller.exit == False:
+                        angles = characterization.calcAngleLive()
+                        actual_angle = angles[2]
 
-                    regulator_vals = p_controller.convert(p_controller.compute(actual_angle))
-                    makePressureCmd_new(regulator_vals)
-                    time.sleep(time_per_step)
-                print(regulator_vals)
+                        regulator_vals = p_controller.convert(p_controller.compute(actual_angle))
+                        makePressureCmd_new(regulator_vals)
+                        print(regulator_vals)
+                        time.sleep(time_per_step)
+                    print(f"reached target! actual angle: {characterization.calcAngleLive()[2]}")
+                    time.sleep(10)
                 if controlStop.is_set():
                     break
                 if controlStop.is_set():
