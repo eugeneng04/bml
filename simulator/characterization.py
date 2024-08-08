@@ -44,6 +44,10 @@ def getAngle(center1, center2, center3):
     deg2 = (360 + degrees(atan2(x3 - x2, y3 - y2))) % 360
     return 180 - (deg2 - deg1) if deg1 <= deg2 else 180 -(360 - (deg1 - deg2))
 
+# tag_dict = {2: 0, # key: actual tag, value = index of robot
+#             3: 1,
+#             17: 2}
+
 tag_dict = {4: 0, # key: actual tag, value = index of robot
             2: 1,
             3: 2,
