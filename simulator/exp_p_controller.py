@@ -40,14 +40,18 @@ def control_loop(q_output, result_folder):
                 for target in targets:
                     p_controller.set_target(target)
                     while p_controller.exit == False:
-                        angles = characterization.calcAngleLive()
-                        actual_angle = angles[2]
+                        try:
+                            angles = characterization.calcAngleLive()
+                            actual_angle = angles[2]
 
-                        regulator_vals = p_controller.convert(p_controller.compute(actual_angle))
-                        print(f"actual angle: {actual_angle}")
-                        makePressureCmd_new(regulator_vals)
-                        print(regulator_vals)
-                        time.sleep(time_per_step)
+                            regulator_vals = p_controller.convert(p_controller.compute(actual_angle))
+                            print(f"actual angle: {actual_angle}")
+                            makePressureCmd_new(regulator_vals)
+                            print(regulator_vals)
+                            time.sleep(time_per_step)
+                        except KeyboardInterrupt:
+                            exit()
+                            break
                     print(f"reached target! actual angle: {characterization.calcAngleLive()[2]}")
                     time.sleep(10)
                 if controlStop.is_set():
