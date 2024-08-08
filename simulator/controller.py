@@ -7,6 +7,7 @@ class p_controller():
         self.i = i #index of actuator
         self.funcs = robot_characterization.get_functions()
         self.exit = False
+        self.prevOut = np.zeros(12)
     
     def set_target(self, target):
         self.target = target    
@@ -19,16 +20,19 @@ class p_controller():
         output = self.kp * error
         return actualAngle + output
     
-    def convert(self, compute): # return pressure values
-        print(compute)
-        out = np.zeros(12)
-        if compute > 0:
-            out[2*self.i + 1] = self.funcs[2 * self.i + 1]((compute)) # angle to pressure conversion function
+    # def convert(self, compute): # return pressure values 
+    #     print(compute)
+    #     out = np.zeros(12)
+    #     if compute > 0:
+    #         out[2*self.i + 1] = self.funcs[2 * self.i + 1]((compute)) # angle to pressure conversion function
 
-        else:
-            out[2*self.i] = self.funcs[2 * self.i](-(compute))
+    #     else:
+    #         out[2*self.i] = self.funcs[2 * self.i](-(compute))
 
-        return out
+    #     return out
+    def convert(self, compute):
+        self.prevOut[self.i] += compute
+        return self.prevOut
 
 
 if __name__ == "__main__":
