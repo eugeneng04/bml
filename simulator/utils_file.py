@@ -41,6 +41,8 @@ def saveFile(folder_name, data):
                     pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 def pathLogic(path):
+    print(path)
     isExist = os.path.exists(path)
     if not isExist:
+        print(f"created directory: {path}!")
         os.makedirs(path)

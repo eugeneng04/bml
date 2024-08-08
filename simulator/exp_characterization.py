@@ -64,7 +64,7 @@ def control_loop(q_output, result_folder):
                 print("characterization starts")
                 dumpOut = []
                 folder_name_new = f"{folder_name}/images"
-                utils_file.pathLogic(folder_name)
+                utils_file.pathLogic(folder_name_new)
                 for i in range(4): # 4 actuators
                     for j in range(1): #we want to do this 1 times
                         for k in range(2):

@@ -66,20 +66,21 @@ while True:
     #         ax.grid(True)
     print(corners, ids)
     aruco.drawDetectedMarkers(frame, corners, ids)
-    pltobjects = []
-    # for i in range(len(ids)):
-    #     center, rot = get_rotation_from_corners(corners[i])
-    #     pltobjects.append(plt.scatter(center[0] * scale, center[1] * scale, label = f"id: {ids[i]}", color = "red"))
-    # plt.legend()       
-    # plt.draw()
-    # plt.pause(0.01)
-    for i in pltobjects:
-        i.remove()
+    if ids is not None:
+        pltobjects = []
+        for i in range(len(ids)):
+            center, rot = get_rotation_from_corners(corners[i])
+            pltobjects.append(plt.scatter(center[0], center[1], label = f"id: {ids[i]}", color = "red"))
+        plt.legend()       
+        plt.draw()
+        plt.pause(0.01)
+        for i in pltobjects:
+            i.remove()
 
-    cv2.imshow("image", frame)
-    key = cv2.waitKey(1)
-    if key == ord("q"):
-        quit_early = True
-        break
+        cv2.imshow("image", frame)
+        key = cv2.waitKey(1)
+        if key == ord("q"):
+            quit_early = True
+            break
 
         
