@@ -44,7 +44,7 @@ def control_loop(q_output, result_folder):
                         actual_angle = angles[2]
 
                         regulator_vals = p_controller.convert(p_controller.compute(actual_angle))
-                        print(actual_angle)
+                        print(f"actual angle: {actual_angle}")
                         makePressureCmd_new(regulator_vals)
                         print(regulator_vals)
                         time.sleep(time_per_step)

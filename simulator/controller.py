@@ -20,9 +20,11 @@ class p_controller():
         return actualAngle + output
     
     def convert(self, compute): # return pressure values
+        print(compute)
         out = np.zeros(12)
         if compute > 0:
             out[2*self.i + 1] = self.funcs[2 * self.i + 1]((compute)) # angle to pressure conversion function
+
         else:
             out[2*self.i] = self.funcs[2 * self.i](-(compute))
 
