@@ -17,15 +17,14 @@ class p_controller():
         if abs(error) <= 1:
             self.exit = True
         output = self.kp * error
-        print(output)
-        return output + actualAngle
+        return actualAngle + output
     
     def convert(self, compute): # return pressure values
         out = np.zeros(12)
         if compute > 0:
-            out[2*self.i + 1] = self.funcs[2 * self.i + 1](abs(compute))
+            out[2*self.i + 1] = self.funcs[2 * self.i + 1]((compute)) # angle to pressure conversion function
         else:
-            out[2*self.i] = self.funcs[2 * self.i](abs(compute))
+            out[2*self.i] = self.funcs[2 * self.i](-(compute))
 
         return out
 
