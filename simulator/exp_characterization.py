@@ -40,7 +40,7 @@ def control_loop(q_output, result_folder):
     characterizationThread = threading.Thread(group = None, target = characterization.calcAngle, name="angleThread")
     characterizationThread.daemon = False
 
-    #characterizationThread.start() # uncomment this to view angles
+    characterizationThread.start() # uncomment this to view angles
 
     global regulator_vals, solenoid_vals
     global charStart
