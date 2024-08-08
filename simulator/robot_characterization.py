@@ -76,14 +76,26 @@ def display():
     plt.show()
 
 def get_functions():
-    folder_name = f"{utils_file.getCurrPath()}/logs/test"
+    # folder_name = f"{utils_file.getCurrPath()}/logs/test"
 
-    print("Using Saved Data")
-    saved_data = utils_file.openFile(f"{folder_name}")
-    characterization = saved_data["characterization"]
+    # print("Using Saved Data")
+    # saved_data = utils_file.openFile(f"{folder_name}")
+    # characterization = saved_data["characterization"]
 
-    return [interp(x_vals, y_vals) for x_vals, y_vals in characterization]
+    # return [interp(x_vals, y_vals) for x_vals, y_vals in characterization]
 
+    x_vals = [0, 5, 10, 15, 20, 25, 30]
+    act_1 = [0, 28 ,44, 59, 68 ,70, 71]
+    act_2 = [0, 8, 16, 25, 29, 33, 35]
+    act_3 = [0, 20, 39, 52, 70, 72, 76]
+    act_4 = [0, 12 ,31 ,47, 60 ,61 , 55] # edited
+    act_5 = [0, 8 ,26, 40, 47, 48, 50]
+    act_6 = [0, 1, 18, 26 ,46 ,47, 52]
+    act_7 = [0, 5 ,15, 25 ,29, 37,38]
+    act_8 = [0, 13 ,23, 36, 44, 45, 50]
+    lst = [act_1, act_2, act_3, act_4, act_5, act_6, act_7, act_8]
+
+    return [interp(act, x_vals) for act in lst]
 
 if __name__ == "__main__":
     display()
