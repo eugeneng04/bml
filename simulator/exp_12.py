@@ -1,47 +1,7 @@
 import time
-import numpy as np
 from run_stm_12 import *
-import argparse
-import utils_file
-
-camStop = threading.Event()
-camStop.clear()
-video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-ret, frame = video.read()
-if not ret:
-    print("failed to grab frame")
-
-cv2.imshow("frame", frame)
-
-def cameraThread():
-    if (video.isOpened() == False):  
-        print("Error reading video file") 
-     
-    frame_width = int(video.get(3)) 
-    frame_height = int(video.get(4)) 
-    
-    size = (frame_width, frame_height) 
-
-    result = cv2.VideoWriter(f'{folder_name}/recording.avi',  
-                            cv2.VideoWriter_fourcc(*'MJPG'), 
-                            10, size) 
-    while not camStop:
-        ret, frame = video.read() 
-  
-        if ret == True:  
-            result.write(frame) 
-
-            cv2.imshow('Frame', frame) 
-
-    video.release() 
-    result.release() 
 
 def control_loop(q_output, result_folder): 
-    #camera stuff
-    camThread = threading.Thread(group=None, target=cameraThread, name="cameraThread")
-    camThread.daemon = False  # want clean file close
-    #camThread.start()
-
     global regulator_vals, solenoid_vals
     global charStart
     i = 0
@@ -53,11 +13,12 @@ def control_loop(q_output, result_folder):
     makeCmd('PRNWAIT', 1000)   # set wait time for state update in ms
     time.sleep(3)
     print('control_loop: started thread')
-    time_per_step = 2
+    time_per_step = 15
+    pattern = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+               [0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0]]]
 
-    # regulator_vals =  np.array([0, 0, 0, 25, 0, 25, 0, 0])*1.
-    # makePressureCmd()
-
+    makePressureCmd()
     while (not controlStop.is_set()):
         if not stateQ.empty():
             if not charStart.is_set():
@@ -65,33 +26,31 @@ def control_loop(q_output, result_folder):
                 time.sleep(1)  # should run at state update rate                
             else:
                 print("characterization starts")
-                for i in range(4): # 4 actuators
-                    for j in range(1): #we want to do this 1 times
-                        for k in range(2):
-                            pattern_arr = [0, 5, 10, 15, 20, 25, 30, 35]
-                            for val in pattern_arr:
-                                global regulator_vals
-                                temp = np.zeros(12)
-
-                                temp[2*i + k] = val
-                                regulator_vals = temp
-                                #print(regulator_vals)
-                                makePressureCmd_new(regulator_vals)
-                                time.sleep(time_per_step)
-                                ret, frame = video.read()
-                                if not ret:
-                                    print("failed to grab frame")
-                                    break
-                                cv2.imshow("frame", frame)
-                                img_name = f"{folder_name}/capture_{2*i+k}_{val}_psi_{j}.png"
-                                cv2.imwrite(img_name, frame)
-
-                                if controlStop.is_set():
-                                    break
-                                if controlStop.is_set():
-                                    break
-                
+                for i in range(1):
+                    print('trial', i)
+                    # print("setting backbone to " +str(backbone_pressure)+ " PSI)")
+                    for j, cur_pattern in enumerate(pattern):
+                        # print("setting actuator to " +str(actuator_pressure)+ " PSI)")
+                        state = stateQ.get()
+                        regulator_vals = cur_pattern
+                        print(f'step {j}')
+                        makePressureCmd_new(regulator_vals)
+                        for i, val in enumerate(regulator_vals):
+                            dumpQ(q_output, 'regulator', 'PWM{}'.format(i+1), val, time.time()-t0)
+                        time.sleep(time_per_step)
+                        if controlStop.is_set():
+                            break
+                    dumpQ(q_output, 'info', 'CYCLE_DONE', i, time.time()-t0)
+                    if controlStop.is_set():
+                        break
                 charStart.clear()
+                q_output_list = []
+                while not q_output.empty():
+                    q_output_list.append(q_output.get())
+
+                with open(os.path.join(result_folder, "queue.pickle"), "wb") as f:
+                    pickle.dump(q_output_list, f)
+                print('queue saved')
                 controlStop.set() # stop program after done characterization
         else:
 #            print('stateQ empty')
@@ -99,28 +58,25 @@ def control_loop(q_output, result_folder):
             time.sleep(1)
 
     print('control_loop: finished thread')
-    camStop.set() # custom camera thread
+    
     cameraStop.set()
 
 if __name__ == '__main__':
     import argparse
     import json
     import os
+    import utils
     parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir", default='./data-raw')
+    parser.add_argument("--run_name", default='test')
+    parser.add_argument('--comment', default="")
+    parser.add_argument("--debug", action='store_true')
 
-    parser.add_argument("name", help = "folder for name of file")
-    parser.add_argument("--dump", action="store_false", help = "whether to use saved output")
-    folder_name = f"{utils_file.getCurrPath()}/logs/{parser.parse_args().name}"
+    args = parser.parse_args()
+    args.run_name = os.path.splitext(os.path.basename(__file__))[0]
+    result_folder = utils.create_runs_folder(args)
+    if is_camera_available:
+        aruco_detector.start_video(result_folder)
 
-    flag = utils_file.validData(folder_name, "pattern")
-
-    # for i in range(4): # 4 actuators
-    #     for j in range(1): #we want to do this 1 times
-    #         for k in range(2):
-    #             pattern_arr = [0, 5, 10, 15, 20, 25, 30, 35]
-    #             for val in pattern_arr:
-    #                 regulator_vals = np.zeros(12)
-
-    #                 regulator_vals[2*i + k] = val
-    #                 print(regulator_vals)
-    try_main(control_loop, None, None)
+    q_output = queue.Queue()
+    try_main(control_loop, q_output, result_folder)
