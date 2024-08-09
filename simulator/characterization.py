@@ -86,7 +86,6 @@ def calcAngleLive():
     global latestFrame
     corners, ids, c = detect_aruco_tag(latestFrame)
     if ids is not None:
-        aruco.drawDetectedMarkers(frame, corners, ids)
         centerDict = {}
         for i in range(len(ids)):
             center, rot = get_rotation_from_corners(corners[i])

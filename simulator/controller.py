@@ -36,11 +36,7 @@ class p_controller():
     def convert(self, compute):
         print(compute)
         value = (compute) * 0.2
-<<<<<<< HEAD
         if  self.target > 0: # odds negative, evens positive, cw postive, ccw negative
-=======
-        if self.target > 0:
->>>>>>> b7c06c65896338b7ceaab1467170aa51f1613eba
             self.prevOut[2 * self.i + 1] += value
             self.prevOut[2 * self.i] = 0
         else:
