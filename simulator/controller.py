@@ -18,7 +18,7 @@ class p_controller():
         if abs(error) <= 1:
             self.exit = True
         output = self.kp * error
-        return actualAngle + output
+        return output
     
     # def convert(self, compute): # return pressure values 
     #     print(compute)
@@ -31,11 +31,13 @@ class p_controller():
 
     #     return out
     def convert(self, compute):
-        if compute > 0:
-            self.prevOut[2 * self.i + 1] += compute * 0.1
+        print(compute)
+        value = (compute) * 0.2
+        if self.prevOut[2 * self.i + 1] + value > 0 and self.target > 0:
+            self.prevOut[2 * self.i + 1] += value
             self.prevOut[2* self.i] = 0
         else:
-            self.prevOut[2 * self.i] += -compute * 0.1
+            self.prevOut[2 * self.i] += -compute * 0.2
             self.prevOut[2*self.i + 1] = 0
         return self.prevOut
 

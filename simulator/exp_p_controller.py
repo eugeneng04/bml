@@ -26,8 +26,7 @@ def control_loop(q_output, result_folder):
     time_per_step = 2
 
     p_controller = controller.p_controller(2, 2)
-    targets = [0, 5, 10, 15, 0]
-
+    targets = [5,10, 20, 30, 0]
 
     while (not controlStop.is_set()):
         if not stateQ.empty():
@@ -39,25 +38,24 @@ def control_loop(q_output, result_folder):
                 global regulator_vals
                 for target in targets:
                     p_controller.set_target(target)
-                    while p_controller.exit == False:
-                        try:
-                            angles = characterization.calcAngleLive()
-                            actual_angle = angles[2]
+                    while p_controller.exit == False and not controlStop.is_set():
+                        angles = characterization.calcAngleLive()
+                        actual_angle = angles[2]
 
-                            regulator_vals = p_controller.convert(p_controller.compute(actual_angle))
-                            print(f"actual angle: {actual_angle}")
-                            makePressureCmd_new(regulator_vals)
-                            print(regulator_vals)
-                            time.sleep(time_per_step)
-                        except KeyboardInterrupt:
-                            exit()
+                        regulator_vals = p_controller.convert(p_controller.compute(actual_angle))
+                        print(f"actual angle: {actual_angle}")
+                        makePressureCmd_new(regulator_vals)
+                        print(regulator_vals)
+                        time.sleep(time_per_step)
+                        if controlStop.is_set():
                             break
                     print(f"reached target! actual angle: {characterization.calcAngleLive()[2]}")
                     time.sleep(10)
+                    if controlStop.is_set():
+                        break
                 if controlStop.is_set():
                     break
-                if controlStop.is_set():
-                    break
+                
                 
                 charStart.clear()
                 controlStop.set() # stop program after done characterization
