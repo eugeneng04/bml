@@ -33,8 +33,10 @@ class p_controller():
     def convert(self, compute):
         if compute > 0:
             self.prevOut[2 * self.i + 1] += compute
+            self.prevOut[2* self.i] = 0
         else:
             self.prevOut[2 * self.i] += -compute
+            self.prevOut[2*self.i + 1] = 0
         return self.prevOut
 
 
