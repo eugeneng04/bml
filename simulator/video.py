@@ -37,7 +37,11 @@ def pixelToMM(corners, mm):
     avg_len = np.mean((top, bottom))
     return mm/avg_len
 
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+
+
 
 first_frame = True
 
@@ -64,23 +68,23 @@ while True:
     #         ax.set_ylabel('Y-axis (mm)')
     #         ax.set_title('Center of ARTag')
     #         ax.grid(True)
-    print(corners, ids)
+    #print(corners, ids)
     aruco.drawDetectedMarkers(frame, corners, ids)
-    if ids is not None:
-        pltobjects = []
-        for i in range(len(ids)):
-            center, rot = get_rotation_from_corners(corners[i])
-            pltobjects.append(plt.scatter(center[0], center[1], label = f"id: {ids[i]}", color = "red"))
-        plt.legend()       
-        plt.draw()
-        plt.pause(0.01)
-        for i in pltobjects:
-            i.remove()
+    # if ids is not None:
+    #     pltobjects = []
+    #     for i in range(len(ids)):
+    #         center, rot = get_rotation_from_corners(corners[i])
+    #         pltobjects.append(plt.scatter(center[0], center[1], label = f"id: {ids[i]}", color = "red"))
+    #     plt.legend()       
+    #     plt.draw()
+    #     plt.pause(0.01)
+    #     for i in pltobjects:
+    #         i.remove()
 
-        cv2.imshow("image", frame)
-        key = cv2.waitKey(1)
-        if key == ord("q"):
-            quit_early = True
-            break
+    cv2.imshow("image", frame)
+    key = cv2.waitKey(1)
+    if key == ord("q"):
+        quit_early = True
+        break
 
         

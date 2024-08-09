@@ -14,9 +14,9 @@ def control_loop(q_output, result_folder):
     time.sleep(3)
     print('control_loop: started thread')
     time_per_step = 15
-    pattern = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-               [0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-               [0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0]]
+    pattern = [np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+               np.array([0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+               np.array([0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0])]
 
     makePressureCmd()
     while (not controlStop.is_set()):
