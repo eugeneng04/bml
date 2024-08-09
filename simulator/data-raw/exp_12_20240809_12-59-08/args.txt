@@ -1,0 +1,4 @@
+comment = 
+data_dir = ./data-raw
+debug = False
+run_name = exp_12

@@ -1,0 +1,6 @@
+{
+    "data_dir": "./data-raw",
+    "run_name": "test",
+    "comment": "",
+    "debug": false
+}

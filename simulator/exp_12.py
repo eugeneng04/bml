@@ -16,7 +16,7 @@ def control_loop(q_output, result_folder):
     time_per_step = 15
     pattern = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                [0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-               [0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0]]]
+               [0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0]]
 
     makePressureCmd()
     while (not controlStop.is_set()):
@@ -73,8 +73,9 @@ if __name__ == '__main__':
     parser.add_argument("--debug", action='store_true')
 
     args = parser.parse_args()
-    args.run_name = os.path.splitext(os.path.basename(__file__))[0]
+    #args.run_name = os.path.splitext(os.path.basename(__file__))[0]
     result_folder = utils.create_runs_folder(args)
+    print(args.run_name)
     if is_camera_available:
         aruco_detector.start_video(result_folder)
 
