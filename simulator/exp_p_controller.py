@@ -23,10 +23,10 @@ def control_loop(q_output, result_folder):
     makeCmd('PRNWAIT', 1000)   # set wait time for state update in ms
     time.sleep(3)
     print('control_loop: started thread')
-    time_per_step = 2
+    time_per_step = 3
 
     p_controller = controller.p_controller(2, 2)
-    targets = [5,10, 20, 30, 0]
+    targets = [30, 15, 0]
 
     while (not controlStop.is_set()):
         if not stateQ.empty():
