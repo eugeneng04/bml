@@ -83,8 +83,8 @@ def calcAngle(): #Thread
             print(angleArr)
 
 def calcAngleLive():
-    ret, frame = cap.read()
-    corners, ids, c = detect_aruco_tag(frame)
+    global latestFrame
+    corners, ids, c = detect_aruco_tag(latestFrame)
     if ids is not None:
         aruco.drawDetectedMarkers(frame, corners, ids)
         centerDict = {}
@@ -118,6 +118,17 @@ def calcAngleSingle(frame):
             angleArr.append(getAngle(centerDict[i], centerDict[i+1], centerDict[i+2]))
 
         return(angleArr)
+
+global latestFrame
+latestFrame = None   
+def cameraThread():
+    global latestFrame
+    while True:
+        ret, latestFrame = cap.read()
+
+def getLatestFrame():
+    global latestFrame
+    return latestFrame
 
 if __name__ == "__main__":
     cap = cv2.VideoCapture(0)

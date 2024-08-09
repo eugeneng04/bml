@@ -12,6 +12,11 @@ def control_loop(q_output, result_folder):
 
     #characterizationThread.start() # uncomment this to view angles
 
+    frameThread = threading.Thread(group = None, target = characterization.cameraThread, name="frameThread")
+    frameThread.daemon = False
+
+    frameThread.start() # uncomment this to view angles
+
     global regulator_vals, solenoid_vals
     global charStart
     i = 0

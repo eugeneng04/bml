@@ -30,10 +30,13 @@ class p_controller():
     #         out[2*self.i] = self.funcs[2 * self.i](-(compute))
 
     #     return out
+
+
+    #
     def convert(self, compute):
         print(compute)
         value = (compute) * 0.2
-        if self.prevOut[2 * self.i + 1] + value > 0 and self.target > 0:
+        if  self.target > 0: # odds negative, evens positive, cw postive, ccw negative
             self.prevOut[2 * self.i + 1] += value
             self.prevOut[2* self.i] = 0
         else:
