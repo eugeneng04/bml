@@ -12,6 +12,7 @@ class pi_controller():
         self.prevOut = np.zeros(12)
         self.integral = 0
         self.prev_time = datetime.now()
+        self.error = 0
     
     def set_target(self, target):
         self.integral = 0
@@ -22,6 +23,7 @@ class pi_controller():
         curr_time = datetime.now()
         delta_t = (curr_time - self.prev_time).total_seconds()
         error = self.target - actualAngle
+        self.error = error
         if abs(error) <= 1:
             self.exit = True
         p = self.kp * error
@@ -33,9 +35,9 @@ class pi_controller():
     
    
     def convert(self, compute):
-        print(compute)
         value = (compute) * 0.2
-        if  self.target > 0: # odds negative, evens positive, cw postive, ccw negative
+        print(value)
+        if  self.error > 0: # odds negative, evens positive, cw postive, ccw negative
             if value > 0:
                 self.prevOut[2 * self.i + 1] = value
             else:

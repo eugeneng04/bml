@@ -4,6 +4,7 @@ import cv2
 import cv2.aruco as aruco
 from math import atan2, degrees
 import time
+import threading
 
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
@@ -58,9 +59,11 @@ tag_dict = {4: 0, # key: actual tag, value = index of robot
 
 cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
+frameStop = threading.event()
+frameStop.clear()
 def calcAngle(): #Thread
     #frame = cv2.imread("test_data_1.jpg")
-    while True:
+    while not frameStop.is_set():
         ret, frame = cap.read()
         corners, ids, c = detect_aruco_tag(frame)
         if ids is not None:

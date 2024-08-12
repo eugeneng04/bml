@@ -28,9 +28,9 @@ def control_loop(q_output, result_folder):
     makeCmd('PRNWAIT', 1000)   # set wait time for state update in ms
     time.sleep(3)
     print('control_loop: started thread')
-    time_per_step = 2
+    time_per_step = 1
 
-    pi_controller = controller.pi_controller(2, 2, 0.1)
+    pi_controller = controller.pi_controller(1, 2, 0.5)
     targets = [30, 15, 0]
 
     while (not controlStop.is_set()):
@@ -55,7 +55,6 @@ def control_loop(q_output, result_folder):
                         if controlStop.is_set():
                             break
                     print(f"reached target! actual angle: {characterization.calcAngleLive()[2]}")
-                    time.sleep(10)
                     if controlStop.is_set():
                         break
                 if controlStop.is_set():
@@ -64,6 +63,7 @@ def control_loop(q_output, result_folder):
                 
                 charStart.clear()
                 controlStop.set() # stop program after done characterization
+                characterization.frameStop.set()
         else:
 #            print('stateQ empty')
             # print("waiting for characterization start")
@@ -71,7 +71,6 @@ def control_loop(q_output, result_folder):
 
     print('control_loop: finished thread')
     print("saving data")
-    exit()
 
 if __name__ == '__main__':
     import argparse
