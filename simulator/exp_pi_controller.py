@@ -45,16 +45,15 @@ def control_loop(q_output, result_folder):
                     pi_controller.set_target(target)
                     while pi_controller.exit == False and not controlStop.is_set():
                         angles = characterization.calcAngleLive()
-                        actual_angle = angles[2]
-
-                        regulator_vals = pi_controller.convert(pi_controller.compute(actual_angle))
+                        actual_angle = angles[1]
                         print(f"actual angle: {actual_angle}")
+                        regulator_vals = pi_controller.convert(pi_controller.compute(actual_angle))
                         makePressureCmd_new(regulator_vals)
                         print(regulator_vals)
                         time.sleep(time_per_step)
                         if controlStop.is_set():
                             break
-                    print(f"reached target! actual angle: {characterization.calcAngleLive()[2]}")
+                    print(f"reached target! actual angle: {actual_angle}")
                     if controlStop.is_set():
                         break
                 if controlStop.is_set():
@@ -72,7 +71,7 @@ def control_loop(q_output, result_folder):
 
     print('control_loop: finished thread')
     print("saving data")
-    characterization.frameStop().set()
+    characterization.frameStop.set()
 
 if __name__ == '__main__':
     import argparse
