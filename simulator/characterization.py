@@ -118,6 +118,19 @@ def calcAngleSingle(frame):
 
         return(angleArr)
 
+def calcAngleCorners(corners, ids):
+    if ids is not None:
+        centerDict = {}
+        for i in range(len(ids)):
+            center, rot = get_rotation_from_corners(corners[i])
+            if int(ids[i][0]) in tag_dict:
+                centerDict[tag_dict[int(ids[i][0])]] = center
+        angleArr = []
+        for i in range(len(centerDict) - 2):
+            angleArr.append(getAngle(centerDict[i], centerDict[i+1], centerDict[i+2]))
+
+        return(angleArr)
+
 global latestFrame
 latestFrame = None   
 def cameraThread():

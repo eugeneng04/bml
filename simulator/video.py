@@ -55,11 +55,12 @@ while True:
         break
 
     corners, ids, c = detect_aruco_tag(frame)
+    print(ids)
     # if ids is not None:
     #     if first_frame and (1000 in ids):
     #         zero_index = np.where(ids == 1000)[0][0]
     #         h, w, *_ = frame.shape
-    #         scale = pixelToMM(corners[zero_index], 22) # change size of artag here
+    #         scale = pixelToMM(corners`[zero_index], 22) # change size of artag here
     #         print(scale)
     #         first_frame = False
     #         ax.set_xlim(0, w * scale)

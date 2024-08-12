@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import utils_aruco
-import simulator.utils_icp as utils_icp
+import utils_icp as utils_icp
 import copy
 from matplotlib.ticker import FuncFormatter
 import circle_fit as cf

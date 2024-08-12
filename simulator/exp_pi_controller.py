@@ -28,9 +28,9 @@ def control_loop(q_output, result_folder):
     makeCmd('PRNWAIT', 1000)   # set wait time for state update in ms
     time.sleep(3)
     print('control_loop: started thread')
-    time_per_step = 3
+    time_per_step = 2
 
-    p_controller = controller.p_controller(2, 2)
+    pi_controller = controller.pi_controller(2, 2, 0.1)
     targets = [30, 15, 0]
 
     while (not controlStop.is_set()):
@@ -42,12 +42,12 @@ def control_loop(q_output, result_folder):
                 print("characterization starts")
                 global regulator_vals
                 for target in targets:
-                    p_controller.set_target(target)
-                    while p_controller.exit == False and not controlStop.is_set():
+                    pi_controller.set_target(target)
+                    while pi_controller.exit == False and not controlStop.is_set():
                         angles = characterization.calcAngleLive()
                         actual_angle = angles[2]
 
-                        regulator_vals = p_controller.convert(p_controller.compute(actual_angle))
+                        regulator_vals = pi_controller.convert(pi_controller.compute(actual_angle))
                         print(f"actual angle: {actual_angle}")
                         makePressureCmd_new(regulator_vals)
                         print(regulator_vals)
