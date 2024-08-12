@@ -71,6 +71,7 @@ def control_loop(q_output, result_folder):
 
     print('control_loop: finished thread')
     print("saving data")
+    exit()
 
 if __name__ == '__main__':
     import argparse
