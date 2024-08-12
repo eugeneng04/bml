@@ -30,8 +30,8 @@ def control_loop(q_output, result_folder):
     print('control_loop: started thread')
     time_per_step = 1
 
-    pi_controller = controller.pi_controller(1, 2, 0.5)
-    targets = [30, 15, 0]
+    pid_controller = controller.pid_controller(1, 0.5, 2, 0) #index, Kp, Ki
+    targets = [30, 15, 0, -15, -30]
 
     while (not controlStop.is_set()):
         if not stateQ.empty():
@@ -42,18 +42,20 @@ def control_loop(q_output, result_folder):
                 print("characterization starts")
                 global regulator_vals
                 for target in targets:
-                    pi_controller.set_target(target)
-                    while pi_controller.exit == False and not controlStop.is_set():
+                    pid_controller.set_target(target)
+                    while pid_controller.exit == False and not controlStop.is_set():
                         angles = characterization.calcAngleLive()
-                        actual_angle = angles[1]
-                        print(f"actual angle: {actual_angle}")
-                        regulator_vals = pi_controller.convert(pi_controller.compute(actual_angle))
-                        makePressureCmd_new(regulator_vals)
-                        print(regulator_vals)
+                        if len(angles) == 4:
+                            actual_angle = angles[1]
+                            print(f"actual angle: {actual_angle}")
+                            regulator_vals = pid_controller.convert(pid_controller.compute(actual_angle))
+                            makePressureCmd_new(regulator_vals)
+                            print(regulator_vals)
                         time.sleep(time_per_step)
                         if controlStop.is_set():
                             break
                     print(f"reached target! actual angle: {actual_angle}")
+                    time.sleep(3)
                     if controlStop.is_set():
                         break
                 if controlStop.is_set():
