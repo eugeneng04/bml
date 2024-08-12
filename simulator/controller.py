@@ -36,10 +36,16 @@ class pi_controller():
         print(compute)
         value = (compute) * 0.2
         if  self.target > 0: # odds negative, evens positive, cw postive, ccw negative
-            self.prevOut[2 * self.i + 1] = value
+            if value > 0:
+                self.prevOut[2 * self.i + 1] = value
+            else:
+                self.prevOut[2 * self.i + 1] = -value
             self.prevOut[2 * self.i] = 0
         else:
-            self.prevOut[2 * self.i] = -value
+            if value < 0:
+                self.prevOut[2 * self.i] = -value
+            else:
+                self.prevOut[2 * self.i] = value
             self.prevOut[2 * self.i + 1] =  0
         return self.prevOut
 
