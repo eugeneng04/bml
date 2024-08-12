@@ -64,6 +64,7 @@ def control_loop(q_output, result_folder):
                 charStart.clear()
                 controlStop.set() # stop program after done characterization
                 characterization.frameStop.set()
+                
         else:
 #            print('stateQ empty')
             # print("waiting for characterization start")
@@ -71,6 +72,7 @@ def control_loop(q_output, result_folder):
 
     print('control_loop: finished thread')
     print("saving data")
+    characterization.frameStop().set()
 
 if __name__ == '__main__':
     import argparse

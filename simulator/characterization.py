@@ -135,10 +135,12 @@ def calcAngleCorners(corners, ids):
         return(angleArr)
 
 global latestFrame
-latestFrame = None   
+latestFrame = None
+frameStop = threading.Event()
+frameStop.clear()   
 def cameraThread():
     global latestFrame
-    while True:
+    while not frameStop.is_set():
         ret, latestFrame = cap.read()
 
 def getLatestFrame():
