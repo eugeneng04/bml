@@ -13,7 +13,7 @@ import numpy as np
 import queue
 import pickle
 import utils_aruco
-import utils_force_sensor
+#import utils_force_sensor
 
 is_camera_available = True
 # Define the ID of the USB camera
