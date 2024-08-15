@@ -46,8 +46,9 @@ def best_fit_transform(A, B):
 
 def best_fit_transform_2d(A, B):
     T, R, t = best_fit_transform(A, B)
-    # R_angle = np.rad2deg(np.arctan2(R[1, 0], R[0, 0]))
-    R_angle = np.rad2deg(np.arcsin(np.clip(R[0][1], -1, 1)))
+    R_angle = np.rad2deg(np.arctan2(R[1, 0], R[0, 0]))
+    #R_angle = np.rad2deg(np.arcsin(np.clip(R[0][1], -1, 1)))
+    #print(R_angle)
     if R_angle > 180:
         R_angle = 360-R_angle
     if R_angle < -180:

@@ -2,6 +2,7 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 import matplotlib.pyplot as plt
+import utils_data_process
 
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
@@ -37,9 +38,12 @@ def pixelToMM(corners, mm):
     avg_len = np.mean((top, bottom))
     return mm/avg_len
 
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
+camera_id = 0
+cap = cv2.VideoCapture(camera_id)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+
 
 
 
@@ -48,39 +52,34 @@ first_frame = True
 fig, ax = plt.subplots()
 
 #arbitrary id mappings: 0 -> zero point, 1 -> first joint, 2->second joint, 3-> third joint, 4-> fourth joint
-
+id_lst = [3, 17, 10, 5]
 while True:
     ret, frame = cap.read()
     if not ret:
         break
 
     corners, ids, c = detect_aruco_tag(frame)
-    print(ids)
-    # if ids is not None:
-    #     if first_frame and (1000 in ids):
-    #         zero_index = np.where(ids == 1000)[0][0]
-    #         h, w, *_ = frame.shape
-    #         scale = pixelToMM(corners`[zero_index], 22) # change size of artag here
-    #         print(scale)
-    #         first_frame = False
-    #         ax.set_xlim(0, w * scale)
-    #         ax.set_ylim(0, h * scale)
-    #         ax.set_xlabel('X-axis (mm)')
-    #         ax.set_ylabel('Y-axis (mm)')
-    #         ax.set_title('Center of ARTag')
-    #         ax.grid(True)
-    #print(corners, ids)
+    if ids is not None:
+        id_to_corner = {}
+
+        for i in range(len(ids)):
+            id_to_corner[int(ids[i][0])] = corners[i][0]
+        
+        angles = []
+        angles_relative = []
+        
+        for i in range(len(id_lst)):
+            if 4 in id_to_corner and id_lst[i] in id_to_corner:
+                angle = utils_data_process.cmp_corners(id_to_corner[4], id_to_corner[id_lst[i]])["rot"]
+                angles.append(angle)
+                if i == 0:
+                    angles_relative.append(angle)
+                else:
+                    angles_relative.append(angles[i] - angles[i - 1])
+        
+        print(angles_relative)
+            
     aruco.drawDetectedMarkers(frame, corners, ids)
-    # if ids is not None:
-    #     pltobjects = []
-    #     for i in range(len(ids)):
-    #         center, rot = get_rotation_from_corners(corners[i])
-    #         pltobjects.append(plt.scatter(center[0], center[1], label = f"id: {ids[i]}", color = "red"))
-    #     plt.legend()       
-    #     plt.draw()
-    #     plt.pause(0.01)
-    #     for i in pltobjects:
-    #         i.remove()
 
     cv2.imshow("image", frame)
     key = cv2.waitKey(1)

@@ -328,7 +328,9 @@ def default_data_prep(result_folder, ids=[], tag_offset_dict={}):
     first_base_corners = None
     last_base_corners = None
 
-    if not (0 in ids):
+    base_tag = 2
+
+    if not (base_tag in ids): # base tag
         first_base_corners = np.array([
             [0,1],
             [1,1],
@@ -338,17 +340,19 @@ def default_data_prep(result_folder, ids=[], tag_offset_dict={}):
         last_base_corners = np.copy(first_base_corners)
 
     first_camera_scale = 0
+    first_frame_flag = True
+    first_frame_arr = []
     for i, t in enumerate(camera_time):
         cur_ids = camera_dict['ids'][i]
         cur_corners = camera_dict['corners'][i]
         corners_by_id = camera_dict['corners_by_id'][i]
 
 
-        if 0 in corners_by_id:
+        if base_tag in corners_by_id: #base tag
             if first_base_corners is None:
-                first_base_corners = corners_by_id[0]
+                first_base_corners = corners_by_id[base_tag]
                 first_camera_scale = 3 / cmp_avg_side_len(first_base_corners)
-            last_base_corners = corners_by_id[0]
+            last_base_corners = corners_by_id[base_tag]
         
         for id in corners_by_id:
             if len(ids)!=0 and not(id in ids):
@@ -359,6 +363,7 @@ def default_data_prep(result_folder, ids=[], tag_offset_dict={}):
                 continue
             
             angle_wrt_horiz = calc_angle_wrt_horiz(corners_by_id[id])
+            #print(angle_wrt_horiz)
             data_dict = cmp_corners(last_base_corners, corners_by_id[id])
             data_dict.update({
                 't': t,
@@ -372,6 +377,7 @@ def default_data_prep(result_folder, ids=[], tag_offset_dict={}):
                 offset = rotate_point(data_dict['centroid'], np.array(tag_offset_dict[id]['disp']) / first_camera_scale,  tag_offset_dict[id]['rot']-angle_wrt_horiz)
             else:
                 offset = np.array([0, 0])
+            #print(f"id: {id}, offset: {offset}, {first_camera_scale}")
             corners_offset = corners_by_id[id] + offset
             transform_offset = cmp_corners(last_base_corners, corners_offset)
             data_dict.update({
