@@ -294,16 +294,16 @@ def calc_angle_wrt_horiz(corners):
                      [0, 0], [1, 0], [1, 1],[0, 1], 
                 ]
             ))['rot']
-def multi_data_prep(data_folder, result_name_arr, ids, tag_offset_dict={}):
+def multi_data_prep(data_folder, result_name_arr, ids, base_tag_arr, tag_size_arr, tag_offset_dict={}):
     values_dict_arr = []
     times_dict_arr = []
     camera_dict_arr = []
     camera_data_dict_arr = []
     camera_scale_arr = []
 
-    for result_name in result_name_arr:
+    for i, result_name in enumerate(result_name_arr):
         result_folder = os.path.join(data_folder, result_name)
-        values_dict, times_dict, camera_dict, camera_data_dict, camera_scale = default_data_prep(result_folder, ids=ids, tag_offset_dict=tag_offset_dict)
+        values_dict, times_dict, camera_dict, camera_data_dict, camera_scale = default_data_prep(base_tag_arr[i], tag_size_arr[i], result_folder, ids=ids, tag_offset_dict=tag_offset_dict)
         values_dict_arr.append(values_dict)
         times_dict_arr.append(times_dict)
         camera_dict_arr.append(camera_dict)
@@ -313,7 +313,7 @@ def multi_data_prep(data_folder, result_name_arr, ids, tag_offset_dict={}):
     return values_dict_arr, times_dict_arr, camera_dict_arr, camera_data_dict_arr, camera_scale_arr
 
 
-def default_data_prep(result_folder, ids=[], tag_offset_dict={}):
+def default_data_prep(base_tag, tag_size, result_folder, ids=[], tag_offset_dict={}):
     values_dict, times_dict, camera_dict = load_data(result_folder, use_buffer=True)
 
     video_path = os.path.join(result_folder, 'output_video_0.avi')
@@ -328,7 +328,6 @@ def default_data_prep(result_folder, ids=[], tag_offset_dict={}):
     first_base_corners = None
     last_base_corners = None
 
-    base_tag = 2
 
     if not (base_tag in ids): # base tag
         first_base_corners = np.array([
@@ -351,7 +350,7 @@ def default_data_prep(result_folder, ids=[], tag_offset_dict={}):
         if base_tag in corners_by_id: #base tag
             if first_base_corners is None:
                 first_base_corners = corners_by_id[base_tag]
-                first_camera_scale = 3 / cmp_avg_side_len(first_base_corners)
+                first_camera_scale = tag_size / cmp_avg_side_len(first_base_corners)
             last_base_corners = corners_by_id[base_tag]
         
         for id in corners_by_id:
@@ -405,9 +404,9 @@ def default_data_prep(result_folder, ids=[], tag_offset_dict={}):
             camera_data_dict[key][id] = np.array(camera_data_dict[key][id])
     print(camera_data_dict.keys())
     if 1 in camera_data_dict['corners_len']:
-        camera_scale = 3/camera_data_dict['corners_len'][1]
+        camera_scale = tag_size/camera_data_dict['corners_len'][1]
     else:
-        camera_scale = 3/camera_data_dict['corners_len'][2]
+        camera_scale = tag_size/camera_data_dict['corners_len'][2]
 
     return values_dict, times_dict, camera_dict, camera_data_dict, camera_scale
 
