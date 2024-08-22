@@ -418,6 +418,8 @@ def calc_cycle(n_cycle, x_time, r_time):
     # given regulator time sequence, divide x_time into each cycle
     cycle_len = r_time.shape[0]//n_cycle
     t_cycle = []
+    t_cycle_top = []
+    t_cycle_bot = []
     cycle_start_idx = []
     for i in range(n_cycle):
         start_idx = i * cycle_len
@@ -431,16 +433,20 @@ def calc_cycle(n_cycle, x_time, r_time):
         middle_idx = np.where(x_time < middle_t)[0][-1] + 1
         max_idx = np.where(x_time <= end_t)[0][-1] + 1
         x_time[min_idx:middle_idx] -= start_t
-        x_time[middle_idx:max_idx] = end_t - x_time[middle_idx:max_idx]
+        x_time[middle_idx:max_idx] = end_t - x_time[middle_idx:max_idx] # this is where we overlap the x values?
         if i == 0:
             cycle_start_idx = []
             t_cycle = np.copy(x_time)
+            t_cycle_top = [-1] * len(x_time)
+            t_cycle_bot = [-1] * len(x_time)
         t_cycle[min_idx:max_idx] = x_time[min_idx:max_idx]
+        t_cycle_top[min_idx:middle_idx] = x_time[min_idx:middle_idx]
+        t_cycle_bot[middle_idx:max_idx] = x_time[middle_idx:max_idx]
         cycle_start_idx.append(min_idx)
         if i == n_cycle-1:
             cycle_start_idx.append(max_idx)
 
-    return t_cycle, cycle_start_idx
+    return t_cycle, cycle_start_idx, t_cycle_top, t_cycle_bot
 
 def prep_cycle(n_cycle, camera_data_dict, r_val, r_time):
     # assert r_val.shape[0]%n_cycle == 0
@@ -449,11 +455,15 @@ def prep_cycle(n_cycle, camera_data_dict, r_val, r_time):
     cycle_len = r_val.shape[0]//n_cycle
     print('n cycle', n_cycle, 'cycle len', cycle_len)
     camera_data_dict['t_cycle'] = {}
+    camera_data_dict['t_cycle_top'] = {}
+    camera_data_dict['t_cycle_bot'] = {}
     camera_data_dict['cycle_start_idx'] = {}
-    
+    print(camera_data_dict['t'])
     for id in camera_data_dict['t']:
-        t_cycle, cycle_start_idx = calc_cycle(n_cycle, camera_data_dict['t'][id], r_time)
+        t_cycle, cycle_start_idx, t_cycle_top, t_cycle_bottom = calc_cycle(n_cycle, camera_data_dict['t'][id], r_time)
         camera_data_dict['t_cycle'][id] = np.copy(t_cycle)
+        camera_data_dict['t_cycle_top'][id] = np.copy(t_cycle_top)
+        camera_data_dict["t_cycle_bot"][id] = np.copy(t_cycle_bottom)
         camera_data_dict['cycle_start_idx'][id] = np.copy(cycle_start_idx)
     for id in camera_data_dict['cycle_start_idx']:
         assert len(camera_data_dict['cycle_start_idx'][id]) == n_cycle+1
