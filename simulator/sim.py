@@ -201,8 +201,14 @@ def convertParams(params, prevParams, yTop, yBot): # convert our output of path 
 
     return pressureArr, offset
 
-global characterized_act
-characterized_act = robot_characterization.get_functions()
+global characterized_act_top
+global characterized_act_bot
+#characterized_act = robot_characterization.get_functions()
+import utils_file
+folder_name = f"{utils_file.getCurrPath()}/Data"
+saved_data = utils_file.openFile(folder_name)
+characterized_act_top = [saved_data["top_function_1"], saved_data["top_function_2"], saved_data["top_function_3"], saved_data["top_function_4"]]
+characterized_act_top = [saved_data["bot_function_1"], saved_data["bot_function_2"], saved_data["bot_function_3"], saved_data["bot_function_4"]]
 
 def convertParams_new(params):
     global characterized_act # odd goes left, even goes right, 1 indexed
