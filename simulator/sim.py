@@ -3,6 +3,7 @@ import numpy as np
 import scipy.optimize
 import scipy.interpolate
 import robot_characterization
+from datetime import datetime
 
 
 fig, ax = plt.subplots() 
@@ -51,26 +52,29 @@ def rotations_to_rad(rotations): # conversion from degrees to radians
 def gen_robot_array(len, num): # generate robot array for length of robot with uniform lengths
     return np.ones(num) * len
 
-def objective(desired_pos, params, len): # objective function for optimization solver 
-    theta_rad = rotations_to_rad(params[:-1])
+def objective(desired_pos, params, len, offset): # objective function for optimization solver 
+    theta_rad = rotations_to_rad(params)
     H = rotate_robot(theta_rad, len)
     coords = get_pos(H)
-    offset_coords = move_up(coords,params[-1])
+    #offset_coords = move_up(coords,params[-1])
+    offset_coords = move_up(coords, offset)
     l2_norm = np.linalg.norm(desired_pos - offset_coords, 2)
     return l2_norm
 
 def con1(params, lower_bound_arr, upper_bound_arr): #angle constraints
     # lower_bound = -50 # Example lower bound
     # upper_bound = 50  # Example upper bound
-    return [params[i] - lower_bound_arr[i] for i in range(len(params) - 1)] + [upper_bound_arr[i] - params[i] for i in range(len(params) - 1)]
+    return [params[i] - lower_bound_arr[i] for i in range(len(params))] + [upper_bound_arr[i] - params[i] for i in range(len(params))]
 
 def con2(params, prev_optimal):
     return params[-1] - (prev_optimal[-1]) - 0.1
 
-def solve_optimal(robot_arr, current_pos, desired_pos, prev_optimal, lower_bound, upper_bound):
-    objective_func = lambda params: objective(desired_pos, params, robot_arr)
-    sol = scipy.optimize.minimize(objective_func, current_pos, method = "SLSQP", constraints= [{'type': 'ineq', 'fun': lambda params: con1(params, lower_bound, upper_bound)},
-                                                                                                {'type': 'ineq', 'fun': lambda params: con2(params, prev_optimal)}])
+def solve_optimal(robot_arr, current_pos, desired_pos, prev_optimal, lower_bound, upper_bound, offset):
+    objective_func = lambda params: objective(desired_pos, params, robot_arr, offset)
+    # sol = scipy.optimize.minimize(objective_func, current_pos, method = "SLSQP", constraints= [{'type': 'ineq', 'fun': lambda params: con1(params, lower_bound, upper_bound)},
+    #                                                                                             {'type': 'ineq', 'fun': lambda params: con2(params, prev_optimal)}])
+
+    sol = scipy.optimize.minimize(objective_func, current_pos, method = "SLSQP", constraints= [{'type': 'ineq', 'fun': lambda params: con1(params, lower_bound, upper_bound)}])
     return sol.x
 
 def calculate_distances(coordinates):
@@ -106,15 +110,18 @@ def generateExtendedPath(path, y_func,  offset, straight, iters = 100):
     new_path = [x_interp, y_quadratic_offset(offset, x_interp, straight, y_func)]
     return new_path
 
-def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
+def pathFollow(path, y_quadratic, robot_array, vel = 0.5, plot = True, ):
     pattern = []
     offsetArr = []
     robotArr = []
     rotArr = []
     robot_coords = np.array([np.zeros(len(robot_array) + 1),np.zeros(len(robot_array) + 1)])
-    init_conds = np.zeros(len(robot_array) + 1)
+    init_conds = np.zeros(len(robot_array))
     # robot_array = gen_robot_array(15, 4)
     prev_optimal = init_conds
+    prev_t = datetime.now()
+    delta_t = None
+    total_inc = 0
 
     yTop, yBot = genRotationToPressureFunc()
 
@@ -127,28 +134,30 @@ def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
         plt.ylim(-(np.max(path[0]) + 10)/2, (np.max(path[0]) + 10)/2)
 
     while np.max(robot_coords[0]) < np.max(path[0]):
+        curr_t = datetime.now()
+        delta_t = (curr_t - prev_t).total_seconds()
+        inc = delta_t * vel
+        total_inc += inc
+        print(inc)
 
         adjusted_x = robot_coords[0] + inc
 
         next_coords = np.array([adjusted_x, y_quadratic_offset(60, adjusted_x, 0, y_quadratic)])
 
-        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords, prev_optimal, [-33, -55, -48, -49], [70, 70, 45, 35])
+        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords, prev_optimal, [-33, -55, -48, -49], [70, 70, 45, 35], total_inc)
 
         #pattern_i, offset_i = convertParams(optimal_params, prev_optimal, yTop, yBot)
 
-        pattern_i, offset_i = convertParams_new(optimal_params)
+        pattern_i= convertParams_new(optimal_params)
 
         #q.append(optimal_params_converted)
         pattern.append(pattern_i)
-        offsetArr.append(offset_i)
 
         prev_optimal = optimal_params
 
-        rot = optimal_params[:-1]
+        rot = optimal_params
 
-        offset = optimal_params[-1]
-
-        robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), robot_array)), offset)
+        robot_coords = move_up(get_pos(rotate_robot(rotations_to_rad(rot), robot_array)), total_inc)
         robotArr.append(robot_coords)
         rotArr.append(rot)
         if plot:
@@ -160,12 +169,15 @@ def pathFollow(path, y_quadratic, robot_array, inc = 0.1, plot = True, ):
             plt.pause(0.001)
             plotted_robot.remove()
             desired_coords.remove()
-    
+
+        prev_t = curr_t
+
     if plot:
         print("press q to quit and save queue")
         plt.scatter(next_coords[0], next_coords[1], color = "red")
         plot_robot(robot_coords)
         plt.show()
+
     return pattern, offsetArr, robotArr, rotArr
 
 def genRotationToPressureFunc(): #helper function that generates function, want to map angle input to kpi output
@@ -185,9 +197,8 @@ def rotationToPressure(angle, func): # maps rotation to pressure, input is press
 
 
 def convertParams(params, prevParams, yTop, yBot): # convert our output of path follow to pressure input for run_stm, input is queue which is output of pathFollow
-    rot = np.array(params[:-1])
-    prevRot = np.array(prevParams[:-1])
-    offset = params[-1]
+    rot = np.array(params)
+    prevRot = np.array(prevParams)
 
     pressureArr = []
 
@@ -199,7 +210,7 @@ def convertParams(params, prevParams, yTop, yBot): # convert our output of path 
             pressureIn = rotationToPressure(rot[i], yBot)
         pressureArr += pressureIn
 
-    return pressureArr, offset
+    return pressureArr
 
 global characterized_act_top
 global characterized_act_bot
@@ -208,22 +219,22 @@ import utils_file
 folder_name = f"{utils_file.getCurrPath()}/Data"
 saved_data = utils_file.openFile(folder_name)
 characterized_act_top = [saved_data["top_function_1"], saved_data["top_function_2"], saved_data["top_function_3"], saved_data["top_function_4"]]
-characterized_act_top = [saved_data["bot_function_1"], saved_data["bot_function_2"], saved_data["bot_function_3"], saved_data["bot_function_4"]]
+characterized_act_bot = [saved_data["bottom_function_1"], saved_data["bottom_function_2"], saved_data["bottom_function_3"], saved_data["bottom_function_4"]]
 
 def convertParams_new(params):
     global characterized_act # odd goes left, even goes right, 1 indexed
     pressureArr = []
-    rot = params[:-1]
-    offset = params[-1]
+    rot = params
 
     for i in range(len(rot)): # positive will be left, negative right
+        #print(i)
         if rot[i] > 0:
-            pressureArr += [characterized_act[2 * i + 1](abs(rot[i])), 0]
+            pressureArr += [characterized_act_top[i](abs(rot[i])), 0]
         else:
-            print(2*i)
-            pressureArr += [0, characterized_act[2 * i](abs(rot[i]))]
+            #print(2*i)
+            pressureArr += [0, characterized_act_bot[i](abs(rot[i]))]
         
-    return pressureArr, offset
+    return pressureArr
 
 if __name__ == "__main__":
     path = np.array([[0, 25, 48,  60], [0, -20, 0, -20]]) # input some points to do extrapolation on
@@ -234,7 +245,7 @@ if __name__ == "__main__":
     plt.legend()
     new_path = generateExtendedPath(path, y_quadratic, 60, 0, 100)
     robot_array = gen_robot_array(15, 4)
-    pattern, offsetArr, robotArr, rotArr = pathFollow(new_path, y_quadratic, robot_array, inc = 0.2, plot = True)
+    pattern, offsetArr, robotArr, rotArr = pathFollow(new_path, y_quadratic, robot_array, vel = 5, plot = True)
     print(pattern)
 
     #print(offsetArr)
