@@ -67,7 +67,7 @@ def con1(params, lower_bound_arr, upper_bound_arr): #angle constraints
     return [params[i] - lower_bound_arr[i] for i in range(len(params))] + [upper_bound_arr[i] - params[i] for i in range(len(params))]
 
 def con2(params, prev_optimal):
-    return params[-1] - (prev_optimal[-1]) - 0.1
+    return params - prev_optimal - 10
 
 def solve_optimal(robot_arr, current_pos, desired_pos, prev_optimal, lower_bound, upper_bound, offset):
     objective_func = lambda params: objective(desired_pos, params, robot_arr, offset)
