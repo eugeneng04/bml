@@ -30,8 +30,8 @@ def control_loop(q_output, result_folder):
     print('control_loop: started thread')
     time_per_step = 1
 
-    pi_controller = controller.pi_controller(1, 2, 0.5)
-    targets = [30, 15, 0]
+    pi_controller = controller.pi_controller(1, 4, 2)
+    targets = [30, 15, 0, -15, -30]
 
     while (not controlStop.is_set()):
         if not stateQ.empty():

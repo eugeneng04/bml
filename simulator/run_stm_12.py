@@ -15,7 +15,7 @@ import pickle
 import utils_aruco
 #import utils_force_sensor
 
-is_camera_available = True
+is_camera_available = False
 # Define the ID of the USB camera
 try:
     aruco_detector = utils_aruco.ArucoDetector(camera_id=0)
@@ -62,7 +62,7 @@ charStart.clear()
 charStop = threading.Event()
 charStop.clear()
 
-ser = serial.Serial('COM3')
+ser = serial.Serial('COM4')
 ser.baudrate=230400
 
 class StateStruct():

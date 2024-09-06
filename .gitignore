@@ -3,3 +3,4 @@ naneye/logs/*
 env
 __pycache__
 .DS_Store
+simulator/data-raw/*
