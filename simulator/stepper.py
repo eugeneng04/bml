@@ -7,8 +7,11 @@ frequency = 3000
 
 def move_stepper_distance(distance, steps_per_revolution = steps_per_revolution, pitch = pitch, frequency = frequency):
     steps_required = int((distance / pitch) * steps_per_revolution)
-    time_to_run = steps_required / frequency
-    makeCmd('PFRQ1', -3000)
+    time_to_run = abs(steps_required / frequency)
+    if distance > 0:
+        makeCmd('PFRQ1', frequency)
+    else:
+        makeCmd("PFRQ1", -1 * frequency)
     time.sleep(time_to_run)
     makeCmd("PFRQ1", 0)
 
@@ -28,12 +31,18 @@ def control_loop(q_output, result_folder):
     while (not controlStop.is_set()):
         if not stateQ.empty():
             if not charStart.is_set():
-                time.sleep(1)  # should run at state update rate                
+                user_input = input("enter distance: ")
+                move_stepper_distance(float(user_input))
+                if controlStop.is_set():
+                    break     
+                time.sleep(1)  # should run at state update rate 
             else:
                 print("starting stepper test")
-                move_stepper_distance(10)
-                if controlStop.is_set():
-                    break
+                while (not controlStop.is_set()):
+                    user_input = input("enter distance: ")
+                    move_stepper_distance(float(user_input))
+                    if controlStop.is_set():
+                        break
                 charStart.clear()
                 controlStop.set()
         else:
