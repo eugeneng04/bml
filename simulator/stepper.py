@@ -1,6 +1,18 @@
 import time
 from run_stm_12 import *
 
+steps_per_revolution = 200 * 32
+pitch = 1 #1mm pitch, 1mm per revolution
+frequency = 3000
+
+def move_stepper_distance(distance, steps_per_revolution = steps_per_revolution, pitch = pitch, frequency = frequency):
+    steps_required = int((distance / pitch) * steps_per_revolution)
+    time_to_run = steps_required / frequency
+    makeCmd('PFRQ1', -3000)
+    time.sleep(time_to_run)
+    makeCmd("PFRQ1", 0)
+
+
 def control_loop(q_output, result_folder): 
     global regulator_vals, solenoid_vals
     global charStart
@@ -19,9 +31,7 @@ def control_loop(q_output, result_folder):
                 time.sleep(1)  # should run at state update rate                
             else:
                 print("starting stepper test")
-                makeCmd('PFRQ1', 8000)
-                time.sleep(5)
-                makeCmd('PFRQ1', 0)
+                move_stepper_distance(10)
                 if controlStop.is_set():
                     break
                 charStart.clear()
