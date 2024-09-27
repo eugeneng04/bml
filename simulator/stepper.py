@@ -1,9 +1,16 @@
 import time
 from run_stm_12 import *
+import cv2
+from video import *
 
 steps_per_revolution = 200 * 32
 pitch = 1 #1mm pitch, 1mm per revolution
 frequency = 3000
+
+camera_id = 1
+cap = cv2.VideoCapture(camera_id)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
 
 def move_stepper_distance(distance, steps_per_revolution = steps_per_revolution, pitch = pitch, frequency = frequency):
     steps_required = int((distance / pitch) * steps_per_revolution)
@@ -38,9 +45,37 @@ def control_loop(q_output, result_folder):
                 time.sleep(1)  # should run at state update rate 
             else:
                 print("starting stepper test")
+
+                first_frame = True
+
+
                 while (not controlStop.is_set()):
-                    user_input = input("enter distance: ")
-                    move_stepper_distance(float(user_input))
+                    base_tag = 2
+                    slider_tag = 17
+                    moving_tag = 10
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+
+                    corners, ids, c = detect_aruco_tag(frame)
+                    #print(corners, ids)
+                    if ids is not None: 
+                        if first_frame and (2 in ids): # get the scale
+                            base_index = np.where(ids == base_tag)[0][0]
+                            h, w, *_ = frame.shape
+                            scale = pixelToMM(corners[base_index], 4.5) # change size of artag here
+                            first_frame = False
+
+                    if ids is not None:
+                        if moving_tag in ids and slider_tag in ids:
+                            moving_index = np.where(ids == moving_tag)[0][0]
+                            slider_index = np.where(ids == slider_tag)[0][0]
+
+                            moving_coords = corners[moving_index]
+                            slider_coords = corners[slider_index]
+                            distance = ((moving_coords - slider_coords) * scale)[0][0][0]
+                            print(distance)
+                            move_stepper_distance(float(distance))
                     if controlStop.is_set():
                         break
                 charStart.clear()

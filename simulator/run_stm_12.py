@@ -379,7 +379,7 @@ def main(control_loop, q_output, result_folder, use_force=False):
 
 # =============================================================================
     userThread = threading.Thread(target=input_thread, daemon=True)
-    userThread.start()
+    #userThread.start()
 
     print('Threads started. ctrl C to quit')
     # print(threading.enumerate())

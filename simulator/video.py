@@ -38,53 +38,70 @@ def pixelToMM(corners, mm):
     avg_len = np.mean((top, bottom))
     return mm/avg_len
 
+def temp():
 
-camera_id = 0
-cap = cv2.VideoCapture(camera_id)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    camera_id = 1
+    cap = cv2.VideoCapture(camera_id)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
 
 
 
 
-first_frame = True
+    first_frame = True
 
-fig, ax = plt.subplots()
+    fig, ax = plt.subplots()
 
-#arbitrary id mappings: 0 -> zero point, 1 -> first joint, 2->second joint, 3-> third joint, 4-> fourth joint
-id_lst = [3, 17, 10, 5]
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+    base_tag = 2
+    slider_tag = 17
+    moving_tag = 10
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-    corners, ids, c = detect_aruco_tag(frame)
-    if ids is not None:
-        id_to_corner = {}
+        corners, ids, c = detect_aruco_tag(frame)
+        #print(corners, ids)
+        if ids is not None: 
+            if first_frame and (2 in ids): # get the scale
+                base_index = np.where(ids == base_tag)[0][0]
+                h, w, *_ = frame.shape
+                scale = pixelToMM(corners[base_index], 4.5) # change size of artag here
+                print(f"scale: {scale}")
+                first_frame = False
+                ax.set_xlim(0, w * scale)
+                ax.set_ylim(0, h * scale)
+                ax.set_xlabel('X-axis (mm)')
+                ax.set_ylabel('Y-axis (mm)')
+                ax.set_title('Center of ARTag')
+                ax.grid(True)
 
-        for i in range(len(ids)):
-            id_to_corner[int(ids[i][0])] = corners[i][0]
-        
-        angles = []
-        angles_relative = []
-        
-        for i in range(len(id_lst)):
-            if 4 in id_to_corner and id_lst[i] in id_to_corner:
-                angle = utils_data_process.cmp_corners(id_to_corner[4], id_to_corner[id_lst[i]])["rot"]
-                angles.append(angle)
-                if i == 0:
-                    angles_relative.append(angle)
-                else:
-                    angles_relative.append(angles[i] - angles[i - 1])
-        
-        print(angles_relative)
+        if ids is not None:
+            if moving_tag in ids and slider_tag in ids:
+                moving_index = np.where(ids == moving_tag)[0][0]
+                slider_index = np.where(ids == slider_tag)[0][0]
+
+                moving_coords = corners[moving_index]
+                slider_coords = corners[slider_index]
+                distance = ((moving_coords - slider_coords) * scale)[0][0][0]
+                print(distance)
+
+            aruco.drawDetectedMarkers(frame, corners, ids)
+            pltobjects = []
+
+            for i in range(len(ids)):
+                center, rot = get_rotation_from_corners(corners[i])
+                pltobjects.append(plt.scatter(center[0] * scale, center[1] * scale, label = f"id: {ids[i]}", color = "red"))
+            plt.legend()       
+            plt.draw()
+            plt.pause(0.01)
+            for i in pltobjects:
+                i.remove()
+
+        cv2.imshow("image", frame)
+        key = cv2.waitKey(1)
+        if key == ord("q"):
+            quit_early = True
+            break
+
             
-    aruco.drawDetectedMarkers(frame, corners, ids)
-
-    cv2.imshow("image", frame)
-    key = cv2.waitKey(1)
-    if key == ord("q"):
-        quit_early = True
-        break
-
-        
