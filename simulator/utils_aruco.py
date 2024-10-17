@@ -10,7 +10,7 @@ class ArucoDetector:
         self.parameters = aruco.DetectorParameters()
         self.detector=aruco.ArucoDetector(self.dictionary, self.parameters)
         self.output_vid_flag = False
-        
+        self.queue = None
         while True:
             if isinstance(self.camera_id, (int,)):
                 self.cap = cv2.VideoCapture(self.camera_id, cv2.CAP_DSHOW)
@@ -42,6 +42,8 @@ class ArucoDetector:
             print("Unable to open the camera.")
             # exit()
 
+    def add_queue(self, q):
+        self.queue =  q
     def start_video(self, output_dir):
         self.output_dir = output_dir
         self.output_vid_flag = True
@@ -58,6 +60,8 @@ class ArucoDetector:
         # aruco.drawDetectedMarkers(frame, corners, ids)
         if self.output_vid_flag:
             self.output_video.write(frame)
+        if self.queue:
+            self.queue.put((corners, ids))
         return corners, ids
 
     # def save_and_refresh_vid(self):

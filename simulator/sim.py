@@ -52,12 +52,16 @@ def rotations_to_rad(rotations): # conversion from degrees to radians
 def gen_robot_array(len, num): # generate robot array for length of robot with uniform lengths
     return np.ones(num) * len
 
+global robot_coords
+robot_coords = None
+
 def objective(desired_pos, params, len, offset): # objective function for optimization solver 
     theta_rad = rotations_to_rad(params)
     H = rotate_robot(theta_rad, len)
     coords = get_pos(H)
     #offset_coords = move_up(coords,params[-1])
     offset_coords = move_up(coords, offset)
+    robot_coords = offset_coords
     l2_norm = np.linalg.norm(desired_pos - offset_coords, 2)
     return l2_norm
 
@@ -69,12 +73,19 @@ def con1(params, lower_bound_arr, upper_bound_arr): #angle constraints
 def con2(params, prev_optimal):
     return params - prev_optimal - 10
 
-def solve_optimal(robot_arr, current_pos, desired_pos, prev_optimal, lower_bound, upper_bound, offset):
+def con3(params, top_func, bottom_func):
+    global robot_coords
+    x_vals = robot_coords[0]
+    y_vals = robot_coords[1]
+    return np.hstack([top_func(x_vals) - y_vals, y_vals - bottom_func(x_vals)])
+
+def solve_optimal(robot_arr, current_pos, desired_pos, prev_optimal, lower_bound, upper_bound, offset, top_func, bottom_func):
     objective_func = lambda params: objective(desired_pos, params, robot_arr, offset)
     # sol = scipy.optimize.minimize(objective_func, current_pos, method = "SLSQP", constraints= [{'type': 'ineq', 'fun': lambda params: con1(params, lower_bound, upper_bound)},
     #                                                                                             {'type': 'ineq', 'fun': lambda params: con2(params, prev_optimal)}])
 
-    sol = scipy.optimize.minimize(objective_func, current_pos, method = "SLSQP", constraints= [{'type': 'ineq', 'fun': lambda params: con1(params, lower_bound, upper_bound)}])
+    sol = scipy.optimize.minimize(objective_func, current_pos, method = "SLSQP", constraints= [{'type': 'ineq', 'fun': lambda params: con1(params, lower_bound, upper_bound)},
+                                                                                               {'type': 'ineq', 'fun': lambda params: con3(params, top_func, bottom_func)}])
     return sol.x
 
 def calculate_distances(coordinates):
@@ -144,7 +155,7 @@ def pathFollow(path, y_quadratic, robot_array, vel = 0.5, plot = True, ):
 
         next_coords = np.array([adjusted_x, y_quadratic_offset(60, adjusted_x, 0, y_quadratic)])
 
-        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords, prev_optimal, [-33, -55, -48, -49], [70, 70, 45, 35], total_inc)
+        optimal_params = solve_optimal(robot_array, prev_optimal, next_coords, prev_optimal, [-33, -55, -48, -49], [70, 70, 45, 35], total_inc, )
 
         #pattern_i, offset_i = convertParams(optimal_params, prev_optimal, yTop, yBot)
 

@@ -62,7 +62,7 @@ charStart.clear()
 charStop = threading.Event()
 charStop.clear()
 
-ser = serial.Serial('COM4')
+ser = serial.Serial('/dev/tty.usbmodem1203')
 ser.baudrate=230400
 
 class StateStruct():
@@ -379,7 +379,7 @@ def main(control_loop, q_output, result_folder, use_force=False):
 
 # =============================================================================
     userThread = threading.Thread(target=input_thread, daemon=True)
-    #userThread.start()
+    userThread.start()
 
     print('Threads started. ctrl C to quit')
     # print(threading.enumerate())

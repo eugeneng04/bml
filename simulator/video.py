@@ -3,6 +3,7 @@ import cv2.aruco as aruco
 import numpy as np
 import matplotlib.pyplot as plt
 import utils_data_process
+import threading
 
 def detect_aruco_tag(frame):
     dictionary = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
@@ -38,15 +39,30 @@ def pixelToMM(corners, mm):
     avg_len = np.mean((top, bottom))
     return mm/avg_len
 
+def video_thread():
+    camera_id = 1
+    cap = cv2.VideoCapture(camera_id)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        cv2.imshow("image", frame)
+        key = cv2.waitKey(1)
+        if key == ord("q"):
+            quit_early = True
+            break
+
+
 def temp():
 
     camera_id = 1
     cap = cv2.VideoCapture(camera_id)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-
-
-
 
     first_frame = True
 
@@ -58,6 +74,12 @@ def temp():
     while True:
         ret, frame = cap.read()
         if not ret:
+            break
+
+        cv2.imshow("image", frame)
+        key = cv2.waitKey(1)
+        if key == ord("q"):
+            quit_early = True
             break
 
         corners, ids, c = detect_aruco_tag(frame)

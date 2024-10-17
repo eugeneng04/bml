@@ -2,6 +2,7 @@ import time
 from run_stm_12 import *
 import cv2
 from video import *
+import multiprocessing
 
 steps_per_revolution = 200 * 32
 pitch = 1 #1mm pitch, 1mm per revolution
@@ -22,7 +23,8 @@ def move_stepper_distance(distance, steps_per_revolution = steps_per_revolution,
     time.sleep(time_to_run)
     makeCmd("PFRQ1", 0)
 
-
+q = queue.Queue()
+kp = 500
 def control_loop(q_output, result_folder): 
     global regulator_vals, solenoid_vals
     global charStart
@@ -38,32 +40,32 @@ def control_loop(q_output, result_folder):
     while (not controlStop.is_set()):
         if not stateQ.empty():
             if not charStart.is_set():
-                user_input = input("enter distance: ")
-                move_stepper_distance(float(user_input))
+                # user_input = input("enter distance: ")
+                # move_stepper_distance(float(user_input))
                 if controlStop.is_set():
                     break     
                 time.sleep(1)  # should run at state update rate 
             else:
                 print("starting stepper test")
-
                 first_frame = True
-
-
                 while (not controlStop.is_set()):
                     base_tag = 2
                     slider_tag = 17
                     moving_tag = 10
+
                     ret, frame = cap.read()
                     if not ret:
                         break
 
                     corners, ids, c = detect_aruco_tag(frame)
+
                     #print(corners, ids)
                     if ids is not None: 
                         if first_frame and (2 in ids): # get the scale
                             base_index = np.where(ids == base_tag)[0][0]
                             h, w, *_ = frame.shape
                             scale = pixelToMM(corners[base_index], 4.5) # change size of artag here
+                            print(scale)
                             first_frame = False
 
                     if ids is not None:
@@ -74,10 +76,22 @@ def control_loop(q_output, result_folder):
                             moving_coords = corners[moving_index]
                             slider_coords = corners[slider_index]
                             distance = ((moving_coords - slider_coords) * scale)[0][0][0]
-                            print(distance)
-                            move_stepper_distance(float(distance))
+                            print(f"moving distance: {distance}")
+                            #move_stepper_distance(float(-distance))
+                            if distance > 0:
+                                cmd = -min(3000, distance * kp)
+                            else:
+                                cmd =  -max(-3000, distance * kp)
+                            print(cmd)
+                            makeCmd('PFRQ1', cmd)
                     if controlStop.is_set():
                         break
+
+                    # cv2.imshow("image", frame)
+                    # key = cv2.waitKey(1)
+                    # if key == ord("q"):
+                    #     quit_early = True
+                    #     break
                 charStart.clear()
                 controlStop.set()
         else:
@@ -101,10 +115,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     #args.run_name = os.path.splitext(os.path.basename(__file__))[0]
     result_folder = utils.create_runs_folder(args)
-    print(args.run_name)
+    #print(args.run_name)
     if is_camera_available:
         aruco_detector.start_video(result_folder)
 
     q_output = queue.Queue()
     # try_main(control_loop, q_output, result_folder)
     try_main(control_loop, None, None)
+    # while True:
+    #     pass
+    # video_thread()
