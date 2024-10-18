@@ -2,7 +2,6 @@ import time
 from run_stm_12 import *
 import cv2
 from video import *
-import multiprocessing
 
 steps_per_revolution = 200 * 32
 pitch = 1 #1mm pitch, 1mm per revolution

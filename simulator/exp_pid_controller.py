@@ -7,15 +7,15 @@ import characterization
 import controller
 
 def control_loop(q_output, result_folder): 
-    characterizationThread = threading.Thread(group = None, target = characterization.calcAngle, name="angleThread")
-    characterizationThread.daemon = False
+    # characterizationThread = threading.Thread(group = None, target = characterization.calcAngle, name="angleThread")
+    # characterizationThread.daemon = False
 
     #characterizationThread.start() # uncomment this to view angles
 
-    frameThread = threading.Thread(group = None, target = characterization.cameraThread, name="frameThread")
-    frameThread.daemon = False
+    # frameThread = threading.Thread(group = None, target = characterization.cameraThread, name="frameThread")
+    # frameThread.daemon = False
 
-    frameThread.start() # uncomment this to view angles
+    # frameThread.start() # uncomment this to view angles
 
     global regulator_vals, solenoid_vals
     global charStart
@@ -43,6 +43,7 @@ def control_loop(q_output, result_folder):
                 global regulator_vals
                 for target in targets:
                     pid_controller.set_target(target)
+                    
                     while pid_controller.exit == False and not controlStop.is_set():
                         angles = characterization.calcAngleLive()
                         if len(angles) == 4:
@@ -51,6 +52,7 @@ def control_loop(q_output, result_folder):
                             regulator_vals = pid_controller.convert(pid_controller.compute(actual_angle))
                             makePressureCmd_new(regulator_vals)
                             print(regulator_vals)
+                        
                         time.sleep(time_per_step)
                         if controlStop.is_set():
                             break

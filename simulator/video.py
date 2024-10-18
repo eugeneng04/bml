@@ -59,7 +59,7 @@ def video_thread():
 
 def temp():
 
-    camera_id = 1
+    camera_id = 0
     cap = cv2.VideoCapture(camera_id)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
@@ -127,3 +127,5 @@ def temp():
             break
 
             
+if __name__ == "__main__":
+    temp()
